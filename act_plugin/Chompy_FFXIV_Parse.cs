@@ -17,24 +17,37 @@ namespace ACT_Plugin
     {
 
         const string REMOTE_HOST = "localhost";         // Remote host name to send data to
-        const UInt16 REMOTE_PORT = 65495;               // Remote port
-        const UInt16 LOCAL_PORT = 31592;                // Local port
+        const UInt16 REMOTE_PORT = 31593;               // Remote port
+        
+        const string UID_CHAR_LIST = "0123456789abcdefghijklmnopqrstuvwxyz";
+        const int UID_SIZE = 5;
 
-        const byte DATA_TYPE_COMBAT_ACTION = 1;         // Data type, combat action
-        const byte DATA_TYPE_ENCOUNTER = 2;             // Data type, encounter data
-        const byte DATA_TYPE_COMBATANT = 3;             // Data type, combatant data
+        const byte DATA_TYPE_INIT = 1;                  // Data type, init data
+        const byte DATA_TYPE_COMBAT_ACTION = 2;         // Data type, combat action
+        const byte DATA_TYPE_ENCOUNTER = 3;             // Data type, encounter data
+        const byte DATA_TYPE_COMBATANT = 4;             // Data type, combatant data
 
         Label lblStatus;                                // The status label that appears in ACT's Plugin tab
+        string sessionUid;                              // Uid of current session
+        UdpClient udpClient;                            // UDP client used to send data
 
         public void InitPlugin(TabPage pluginScreenSpace, Label pluginStatusText)
         {
+            // generate session uid
+            generateSessionUid();
+            // status label
             lblStatus = pluginStatusText; // Hand the status label's reference to our local var
+            // init udp client
+            udpClient = new UdpClient();
+            udpClient.Connect(REMOTE_HOST, REMOTE_PORT);
+            // send init data
+            sendInitData();
             // hook events
             ActGlobals.oFormActMain.OnCombatStart += new CombatToggleEventDelegate(oFormActMain_OnCombatStart);
             ActGlobals.oFormActMain.OnCombatEnd += new CombatToggleEventDelegate(oFormActMain_OnCombatEnd);
             ActGlobals.oFormActMain.AfterCombatAction += new CombatActionDelegate(oFormActMain_AfterCombatAction);
             // update plugin status text
-            lblStatus.Text = "Plugin Started - [ 3GB4V ]";
+            lblStatus.Text = "Plugin Started - [ " + sessionUid + " ]";
         }
 
         public void DeInitPlugin()
@@ -43,6 +56,8 @@ namespace ACT_Plugin
             ActGlobals.oFormActMain.OnCombatStart -= oFormActMain_OnCombatStart;
             ActGlobals.oFormActMain.OnCombatEnd -= oFormActMain_OnCombatEnd;
             ActGlobals.oFormActMain.AfterCombatAction -= oFormActMain_AfterCombatAction;
+            // close udp client
+            udpClient.Close();
             // update plugin status text
             lblStatus.Text = "Plugin Exited";
         }
@@ -62,15 +77,20 @@ namespace ACT_Plugin
             sendCombatActionData(actionInfo);
         }
 
+        void generateSessionUid()
+        {
+            sessionUid = "";
+            Random randGen = new Random(DateTime.Now.GetHashCode());
+            for (int i = 0; i < UID_SIZE; i++) {
+                int randValue = randGen.Next(0, UID_CHAR_LIST.Length);
+                sessionUid += UID_CHAR_LIST[randValue];
+            }
+        }
+
         void sendUdp(ref List<Byte> sendData)
         {
-            // convert byte list to byte array
             Byte[] sendBytes = sendData.ToArray();
-            // send
-            UdpClient udpClient = new UdpClient(LOCAL_PORT);
-            udpClient.Connect(REMOTE_HOST, REMOTE_PORT);
-            udpClient.Send(sendBytes, sendBytes.Length);
-            udpClient.Close();            
+            udpClient.Send(sendBytes, sendBytes.Length);          
         }
 
         void prepareInt64(ref List<Byte> sendData, Int64 value)
@@ -89,6 +109,16 @@ namespace ACT_Plugin
             sendData.AddRange(valueBytes);
         }
 
+        void sendInitData()
+        {
+            // build send data
+            List<Byte> sendData = new List<Byte>();
+            sendData.Add(DATA_TYPE_INIT);
+            prepareString(ref sendData, sessionUid);
+            // send
+            sendUdp(ref sendData);
+        }
+
         void sendCombatActionData(CombatActionEventArgs actionInfo)
         {
             if (actionInfo.cancelAction) {
@@ -97,7 +127,7 @@ namespace ACT_Plugin
             /*// build send data
             List<Byte> sendData = new List<Byte>();
             sendData.Add(DATA_TYPE_COMBAT_ACTION);                         // declare data type
-            prepareInt64(ref sendData, actionInfo.time.ToBinary());        // time
+            prepareInt64(ref sendData, actionInfo.time.Ticks);             // time
             prepareString(ref sendData, actionInfo.attacker);              // attacker name
             prepareString(ref sendData, actionInfo.victim);                // victim name
             prepareInt64(ref sendData, actionInfo.damage);                 // damage number
@@ -122,8 +152,8 @@ namespace ACT_Plugin
             // build send data
             List<Byte> sendData = new List<Byte>();
             sendData.Add(DATA_TYPE_ENCOUNTER);                             // declare data type
-            prepareInt64(ref sendData, ed.StartTime.ToBinary());           // start time of encounter
-            prepareInt64(ref sendData, ed.EndTime.ToBinary());             // end time of encounter
+            prepareInt64(ref sendData, ed.StartTime.Ticks);                // start time of encounter
+            prepareInt64(ref sendData, ed.EndTime.Ticks);                  // end time of encounter
             sendData.Add((byte) (ed.Active ? 1 : 0));                      // is still active encounter
             prepareString(ref sendData, ed.ZoneName);                      // zone name
             prepareString(ref sendData, ed.EncId);                         // encounter id          
