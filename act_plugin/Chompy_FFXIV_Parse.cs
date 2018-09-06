@@ -18,6 +18,7 @@ namespace ACT_Plugin
 
 		const string REMOTE_HOST = "localhost";		// Remote host name to send data to
 		const UInt16 REMOTE_PORT = 64226;			// Remote port
+		const UInt16 LOCAL_PORT = 31592;			// Local port
 
 		const byte DATA_TYPE_COMBAT_ACTION = 1;		// Data type, combat action
 		//const byte DATA_TYPE_COMBATANT = 2;
@@ -65,20 +66,27 @@ namespace ACT_Plugin
 
 		void sendCombatActionData(CombatActionEventArgs actionInfo)
 		{
+			if (actionInfo.cancelAction) {
+				return;
+			}
 			// build send data
 			List<Byte> sendData = new List<Byte>();
-			sendInt64(ref sendData, actionInfo.time.ToBinary());
-			sendString(ref sendData, actionInfo.attacker);
-			sendInt64(ref sendData, actionInfo.damage);
+			sendData.Add(DATA_TYPE_COMBAT_ACTION);							// declare data type
+			sendInt64(ref sendData, actionInfo.time.ToBinary());			// time
+			sendString(ref sendData, actionInfo.attacker);					// attacker name
+			sendString(ref sendData, actionInfo.victim);					// victim name
+			sendInt64(ref sendData, actionInfo.damage);						// damage number
+			sendString(ref sendData, actionInfo.theAttackType);				// skill name
+			sendString(ref sendData, actionInfo.theDamageType);				// skill type
+			sendData.Add((byte) actionInfo.swingType);						// "swing type"
+			sendData.Add((byte) (actionInfo.critical ? 1 : 0));	     		// was critical
 			// convert byte list to byte array
 			Byte[] sendBytes = sendData.ToArray();
 			// send
-			UdpClient _udpClient = new UdpClient(31593); // udp client for uploading data
-			_udpClient.Connect(REMOTE_HOST, REMOTE_PORT);
-			_udpClient.Send(sendBytes, sendBytes.Length);
-			_udpClient.Close();
-
-
+			UdpClient udpClient = new UdpClient(LOCAL_PORT);
+			udpClient.Connect(REMOTE_HOST, REMOTE_PORT);
+			udpClient.Send(sendBytes, sendBytes.Length);
+			udpClient.Close();
 		}
 
 
