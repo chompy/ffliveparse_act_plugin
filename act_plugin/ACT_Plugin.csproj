@@ -55,13 +55,13 @@
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ChompyFFXIV.cs">
+    <Compile Include="Chompy_FFXIV_Uploader.cs">
       <SubType>UserControl</SubType>
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="ChompyFFXIV.resx">
-      <DependentUpon>PluginSample.cs</DependentUpon>
+    <EmbeddedResource Include="Chompy_FFXIV_Uploader.resx">
+      <DependentUpon>Chompy_FFXIV_Uploader.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
 </Project>
