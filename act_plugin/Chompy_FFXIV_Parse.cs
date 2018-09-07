@@ -18,11 +18,12 @@ namespace ACT_Plugin
 
         const string REMOTE_HOST = "localhost";         // Remote host name to send data to
         const UInt16 REMOTE_PORT = 31593;               // Remote port
+        //const UInt16 REMOTE_PORT = 65495;               // Remote port
         
-        const string UID_CHAR_LIST = "0123456789abcdefghijklmnopqrstuvwxyz";
+        const string UID_CHAR_LIST = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         const int UID_SIZE = 5;
 
-        const byte DATA_TYPE_INIT = 1;                  // Data type, init data
+        const byte DATA_TYPE_SESSION = 1;                  // Data type, session data
         const byte DATA_TYPE_COMBAT_ACTION = 2;         // Data type, combat action
         const byte DATA_TYPE_ENCOUNTER = 3;             // Data type, encounter data
         const byte DATA_TYPE_COMBATANT = 4;             // Data type, combatant data
@@ -40,8 +41,8 @@ namespace ACT_Plugin
             // init udp client
             udpClient = new UdpClient();
             udpClient.Connect(REMOTE_HOST, REMOTE_PORT);
-            // send init data
-            sendInitData();
+            // send session data
+            sendSessionData();
             // hook events
             ActGlobals.oFormActMain.OnCombatStart += new CombatToggleEventDelegate(oFormActMain_OnCombatStart);
             ActGlobals.oFormActMain.OnCombatEnd += new CombatToggleEventDelegate(oFormActMain_OnCombatEnd);
@@ -64,7 +65,7 @@ namespace ACT_Plugin
 
         void oFormActMain_OnCombatStart(bool isImport, CombatToggleEventArgs actionInfo)
         {
-            sendEncounterData(actionInfo.encounter);
+            //sendEncounterData(ActGlobals.oFormActMain.ActiveZone.ActiveEncounter);
         }
 
         void oFormActMain_OnCombatEnd(bool isImport, CombatToggleEventArgs actionInfo)
@@ -102,6 +103,15 @@ namespace ACT_Plugin
             sendData.AddRange(valueBytes);
         }
 
+        void prepareInt32(ref List<Byte> sendData, Int32 value)
+        {
+            Byte[] valueBytes = BitConverter.GetBytes(value);
+            if (BitConverter.IsLittleEndian) {
+                 Array.Reverse(valueBytes);
+            }
+            sendData.AddRange(valueBytes);
+        }
+
         void prepareString(ref List<Byte> sendData, string value)
         {
             Byte[] valueBytes = Encoding.UTF8.GetBytes(value);
@@ -109,11 +119,11 @@ namespace ACT_Plugin
             sendData.AddRange(valueBytes);
         }
 
-        void sendInitData()
+        void sendSessionData()
         {
             // build send data
             List<Byte> sendData = new List<Byte>();
-            sendData.Add(DATA_TYPE_INIT);
+            sendData.Add(DATA_TYPE_SESSION);
             prepareString(ref sendData, sessionUid);
             // send
             sendUdp(ref sendData);
@@ -138,7 +148,7 @@ namespace ACT_Plugin
             // send
             sendUdp(ref sendData);*/
             // send encounter data
-
+            sendEncounterData(ActGlobals.oFormActMain.ActiveZone.ActiveEncounter);
             // check if action data is ally action, if so send updated combatant data
             foreach (CombatantData cd in ActGlobals.oFormActMain.ActiveZone.ActiveEncounter.GetAllies()) {
                 if (cd.Name == actionInfo.attacker) {
@@ -152,17 +162,14 @@ namespace ACT_Plugin
             // build send data
             List<Byte> sendData = new List<Byte>();
             sendData.Add(DATA_TYPE_ENCOUNTER);                             // declare data type
+            prepareInt32(ref sendData, ed.StartTime.GetHashCode());        // unique encounter id
             prepareInt64(ref sendData, ed.StartTime.Ticks);                // start time of encounter
             prepareInt64(ref sendData, ed.EndTime.Ticks);                  // end time of encounter
-            sendData.Add((byte) (ed.Active ? 1 : 0));                      // is still active encounter
             prepareString(ref sendData, ed.ZoneName);                      // zone name
-            prepareString(ref sendData, ed.EncId);                         // encounter id          
+            sendData.Add((byte) (ed.Active ? 1 : 0));                      // is still active encounter
+            sendData.Add((byte) ed.GetEncounterSuccessLevel());            // success level of encounter
             // send
             sendUdp(ref sendData);
-            // get ally combatants, send data
-            foreach (CombatantData cd in ed.GetAllies()) {
-                sendEncounterCombatantData(cd);
-            }
         }
 
         void sendEncounterCombatantData(CombatantData cd)
@@ -170,14 +177,16 @@ namespace ACT_Plugin
             // build send data
             List<Byte> sendData = new List<Byte>();
             sendData.Add(DATA_TYPE_COMBATANT);                             // declare data type
+            prepareInt32(ref sendData, cd.StartTime.GetHashCode());        // encounter id
             prepareString(ref sendData, cd.Name);                          // combatant name
+            prepareString(ref sendData, cd.GetColumnByName("Job"));        // combatant job (ffxiv)
             prepareInt64(ref sendData, cd.Damage);                         // damage done
             prepareInt64(ref sendData, cd.DamageTaken);                    // damage taken
             prepareInt64(ref sendData, cd.Healed);                         // damage healed
-            prepareInt64(ref sendData, cd.Deaths);                         // number of deaths
-            prepareInt64(ref sendData, cd.Hits);                           // number of attacks
-            prepareInt64(ref sendData, cd.Heals);                          // number of heals
-            prepareInt64(ref sendData, cd.Kills);                          // number of kills
+            prepareInt32(ref sendData, cd.Deaths);                         // number of deaths
+            prepareInt32(ref sendData, cd.Hits);                           // number of attacks
+            prepareInt32(ref sendData, cd.Heals);                          // number of heals performed
+            prepareInt32(ref sendData, cd.Kills);                          // number of kills
             // send
             sendUdp(ref sendData);
         }

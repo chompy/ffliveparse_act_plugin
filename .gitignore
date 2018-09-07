@@ -1,2 +1,3 @@
 act_plugin/obj
 *.exe
+*.code-workspace

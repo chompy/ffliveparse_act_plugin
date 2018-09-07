@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"net"
 )
 
@@ -15,12 +15,16 @@ func main() {
 		panic(err)
 	}
 	defer serverConn.Close()
+	userManager := UserManager{}
 	buf := make([]byte, 1024)
 	for {
 		n, addr, err := serverConn.ReadFromUDP(buf)
 		if err != nil {
-			panic(err)
+			log.Panicln("Failed to read message from", addr, ",", err)
 		}
-		fmt.Println("Received ", n, " bytes from ", addr)
+		_, err = userManager.ParseDataString(buf[0:n], addr)
+		if err != nil {
+			log.Println("Error parsing data string from", addr, ",", err)
+		}
 	}
 }
