@@ -54,6 +54,8 @@ func (um *UserManager) ParseDataString(data []byte, addr *net.UDPAddr) (*UserDat
 			log.Println(
 				"Update encounter",
 				base36.Encode(uint64(encounter.ID)),
+				"in session",
+				userData.Session.ID,
 				"(ZoneName:",
 				encounter.Zone,
 				", Duration:",
@@ -97,6 +99,71 @@ func (um *UserManager) ParseDataString(data []byte, addr *net.UDPAddr) (*UserDat
 				combatant.Deaths,
 				")",
 			)
+		}
+	case DataTypeCombatAction:
+		{
+			// user data required
+			if userData == nil {
+				return nil, errors.New("recieved ActCombatAction with no matching UserData")
+			}
+			// parse combat action data
+			combatAction, err := ParseCombatActionString(data)
+			if err != nil {
+				return nil, err
+			}
+			// update user data
+			userData.UpdateCombatAction(&combatAction)
+			// log
+			log.Println(
+				"Combat action for encounter",
+				base36.Encode(uint64(combatAction.EncounterID)),
+				",",
+				combatAction.Attacker,
+				"used",
+				combatAction.Skill,
+				"on",
+				combatAction.Victim,
+				"for",
+				combatAction.Damage,
+				"(SkillType:",
+				combatAction.SkillType,
+				", Critical:",
+				combatAction.Critical,
+				", SwingType:",
+				combatAction.SwingType,
+				")",
+			)
+		}
+	case DataTypeLogLine:
+		{
+			// user data required
+			if userData == nil {
+				return nil, errors.New("recieved ActLogLine with no matching UserData")
+			}
+			// parse log line data
+			logLine, err := ParseLogLineString(data)
+			if err != nil {
+				return nil, err
+			}
+			// TODO, log line data not retained, send it along to all active web socket connections and/or process triggers
+			// log
+			encounterString := "(none)"
+			if logLine.EncounterID > 0 {
+				encounterString = base36.Encode(uint64(logLine.EncounterID))
+			}
+
+			log.Println(
+				"Log line for session",
+				userData.Session.ID,
+				"and encounter",
+				encounterString,
+				",",
+				logLine.LogLine,
+			)
+		}
+	default:
+		{
+			return nil, errors.New("recieved unknown data")
 		}
 	}
 	return userData, nil

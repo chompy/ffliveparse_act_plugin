@@ -5,6 +5,9 @@ import (
 	"net"
 )
 
+// VersionNumber - Version number, must match number recieved from Act plugin to parse data
+const VersionNumber int32 = 1
+
 func main() {
 	serverAddr, err := net.ResolveUDPAddr("udp", ":31593")
 	if err != nil {

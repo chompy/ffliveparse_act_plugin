@@ -10,10 +10,16 @@ import (
 const DataTypeSession byte = 1
 
 // DataTypeEncounter - Data type, encounter data
-const DataTypeEncounter byte = 3
+const DataTypeEncounter byte = 2
 
 // DataTypeCombatant - Data type, combatant data
-const DataTypeCombatant byte = 4
+const DataTypeCombatant byte = 3
+
+// DataTypeCombatAction - Data type, combat action
+const DataTypeCombatAction byte = 4
+
+// DataTypeLogLine - Data type, log line
+const DataTypeLogLine byte = 5
 
 func readInt64(data []byte, pos *int) int64 {
 	dataString := data[*pos : *pos+8]
@@ -46,6 +52,11 @@ func ParseSessionString(data []byte, addr *net.UDPAddr) (Session, error) {
 		return Session{}, errors.New("invalid data type for Session")
 	}
 	pos := 1
+	// check version number
+	versionNumber := readInt32(data, &pos)
+	if versionNumber != VersionNumber {
+		return Session{}, errors.New("version number mismatch")
+	}
 	return Session{
 		ID:   readString(data, &pos),
 		IP:   addr.IP,
@@ -86,5 +97,42 @@ func ParseCombatantString(data []byte) (ActCombatant, error) {
 		Hits:         readInt32(data, &pos),
 		Heals:        readInt32(data, &pos),
 		Kills:        readInt32(data, &pos),
+	}, nil
+}
+
+// ParseCombatActionString - Create ActCombatAction struct from incomming data packet
+func ParseCombatActionString(data []byte) (ActCombatAction, error) {
+	if data[0] != DataTypeCombatAction {
+		return ActCombatAction{}, errors.New("invalid data type for ActCombatAction")
+	}
+	pos := 1
+	return ActCombatAction{
+		EncounterID: readInt32(data, &pos),
+		Tick:        readInt64(data, &pos),
+		Sort:        readInt32(data, &pos),
+		Attacker:    readString(data, &pos),
+		Victim:      readString(data, &pos),
+		Damage:      readInt64(data, &pos),
+		Skill:       readString(data, &pos),
+		SkillType:   readString(data, &pos),
+		SwingType:   readByte(data, &pos),
+		Critical:    readByte(data, &pos) != 0,
+	}, nil
+}
+
+// ParseLogLineString - Create ActLogLine struct from incomming data packet
+func ParseLogLineString(data []byte) (ActLogLine, error) {
+	if data[0] != DataTypeLogLine {
+		return ActLogLine{}, errors.New("invalid data type for ActLogLine")
+	}
+	pos := 1
+	encounterID := readInt32(data, &pos)
+	tick := readInt64(data, &pos)
+	logLineLength := readInt32(data, &pos)
+	logLine := string(data[pos : pos+int(logLineLength)])
+	return ActLogLine{
+		EncounterID: encounterID,
+		Tick:        tick,
+		LogLine:     logLine,
 	}, nil
 }

@@ -2,9 +2,10 @@ package main
 
 // UserData - Data about a single user
 type UserData struct {
-	Session    Session
-	Encounters []ActEncounter
-	Combatants []ActCombatant
+	Session       Session
+	Encounters    []ActEncounter
+	Combatants    []ActCombatant
+	CombatActions []ActCombatAction
 }
 
 // UpdateEncounter - Add or update encounter data
@@ -33,10 +34,25 @@ func (ud *UserData) UpdateCombatant(combatant *ActCombatant) {
 	ud.Combatants = append(ud.Combatants, *combatant)
 }
 
+// UpdateCombatAction - Add combat action
+func (ud *UserData) UpdateCombatAction(combatAction *ActCombatAction) {
+	ud.CombatActions = append(ud.CombatActions, *combatAction)
+}
+
 // GetEncounterForCombatant - Given a combantant get the encounter associated with it
 func (ud *UserData) GetEncounterForCombatant(combatant *ActCombatant) *ActEncounter {
 	for _, storedEncounter := range ud.Encounters {
 		if storedEncounter.ID == combatant.EncounterID {
+			return &storedEncounter
+		}
+	}
+	return nil
+}
+
+// GetEncounterForCombatAction - Given a combat action get the encounter associated with it
+func (ud *UserData) GetEncounterForCombatAction(combatAction *ActCombatAction) *ActEncounter {
+	for _, storedEncounter := range ud.Encounters {
+		if storedEncounter.ID == combatAction.EncounterID {
 			return &storedEncounter
 		}
 	}
@@ -52,4 +68,15 @@ func (ud *UserData) GetCombatantsForEncounter(encounter *ActEncounter) []*ActCom
 		}
 	}
 	return combatants
+}
+
+// GetCombatActionsForEncounter - Given an encounter get list of combat actions
+func (ud *UserData) GetCombatActionsForEncounter(encounter *ActEncounter) []*ActCombatAction {
+	var combatActions []*ActCombatAction
+	for _, storedCombatAction := range ud.CombatActions {
+		if storedCombatAction.EncounterID == encounter.ID {
+			combatActions = append(combatActions, &storedCombatAction)
+		}
+	}
+	return combatActions
 }
