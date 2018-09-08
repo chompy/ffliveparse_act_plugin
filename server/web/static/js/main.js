@@ -10,9 +10,9 @@ window.addEventListener("load", function(e) {
     socket.onmessage = function(event) {
         var fileReader = new FileReader();
         fileReader.onload = function(event) {
-            var uint8Array = new Uint8Array(event.target.result);
-            console.log(uint8Array[0]);
-            console.log(">> Recieved message,", uint8Array);
+            var byteArray = new Uint8Array(event.target.result);
+            var data = parseMessage(byteArray);
+            console.log(">> Recieved message,", data);
         };
         fileReader.readAsArrayBuffer(event.data);
     };

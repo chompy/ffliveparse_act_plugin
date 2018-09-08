@@ -64,17 +64,17 @@ func (um *UserManager) ParseDataString(data []byte, addr *net.UDPAddr) (*UserDat
 			// forward data to web
 			go um.events.Emit("act:encounter", data)
 			// log
-			durMillis := (encounter.EndTick - encounter.StartTick) / EncounterTickToMillisecondDivider
+			dur := encounter.EndTime.Sub(encounter.StartTime)
 			log.Println(
 				"Update encounter",
-				base36.Encode(uint64(encounter.ID)),
+				base36.Encode(uint64(uint32(encounter.ID))),
 				"in session",
 				userData.Session.ID,
 				"(ZoneName:",
 				encounter.Zone,
 				", Duration:",
-				durMillis,
-				"ms, Active:",
+				dur,
+				", Active:",
 				encounter.Active,
 				", SuccessLevel:",
 				encounter.SuccessLevel,
@@ -102,7 +102,7 @@ func (um *UserManager) ParseDataString(data []byte, addr *net.UDPAddr) (*UserDat
 				"Update combatant",
 				combatant.Name,
 				"for encounter",
-				base36.Encode(uint64(combatant.EncounterID)),
+				base36.Encode(uint64(uint32(combatant.EncounterID))),
 				"(Job:",
 				combatant.Job,
 				", Damage:",
@@ -134,7 +134,7 @@ func (um *UserManager) ParseDataString(data []byte, addr *net.UDPAddr) (*UserDat
 			// log
 			log.Println(
 				"Combat action for encounter",
-				base36.Encode(uint64(combatAction.EncounterID)),
+				base36.Encode(uint64(uint32(combatAction.EncounterID))),
 				",",
 				combatAction.Attacker,
 				"used",
@@ -170,7 +170,7 @@ func (um *UserManager) ParseDataString(data []byte, addr *net.UDPAddr) (*UserDat
 			// log
 			encounterString := "(none)"
 			if logLine.EncounterID > 0 {
-				encounterString = base36.Encode(uint64(logLine.EncounterID))
+				encounterString = base36.Encode(uint64(uint32(logLine.EncounterID)))
 			}
 			log.Println(
 				"Log line for session",

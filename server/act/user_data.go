@@ -57,7 +57,7 @@ func (ud *UserData) UpdateCombatAction(combatAction CombatAction) {
 	}
 	// look for existing, drop if found
 	for _, storedCombatAction := range ud.CombatActions {
-		if storedCombatAction.EncounterID == combatAction.EncounterID && storedCombatAction.Tick == combatAction.Tick && storedCombatAction.Sort == combatAction.Sort {
+		if storedCombatAction.EncounterID == combatAction.EncounterID && storedCombatAction.Time == combatAction.Time && storedCombatAction.Sort == combatAction.Sort {
 			return
 		}
 	}

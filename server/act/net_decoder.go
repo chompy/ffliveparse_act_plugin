@@ -4,13 +4,8 @@ import (
 	"encoding/binary"
 	"errors"
 	"net"
+	"time"
 )
-
-func readInt64(data []byte, pos *int) int64 {
-	dataString := data[*pos : *pos+8]
-	*pos += 8
-	return int64(binary.BigEndian.Uint64(dataString))
-}
 
 func readInt32(data []byte, pos *int) int32 {
 	dataString := data[*pos : *pos+4]
@@ -29,6 +24,12 @@ func readString(data []byte, pos *int) string {
 	output := string(data[*pos+1 : *pos+1+length])
 	*pos += 1 + length
 	return output
+}
+
+func readTime(data []byte, pos *int) time.Time {
+	timeString := readString(data, pos)
+	time, _ := time.Parse(time.RFC3339, timeString)
+	return time
 }
 
 // DecodeSessionBytes - Create Session struct from incomming data packet
@@ -57,8 +58,8 @@ func DecodeEncounterBytes(data []byte) (Encounter, error) {
 	pos := 1
 	return Encounter{
 		ID:           readInt32(data, &pos),
-		StartTick:    readInt64(data, &pos),
-		EndTick:      readInt64(data, &pos),
+		StartTime:    readTime(data, &pos),
+		EndTime:      readTime(data, &pos),
 		Zone:         readString(data, &pos),
 		Active:       readByte(data, &pos) != 0,
 		SuccessLevel: readByte(data, &pos),
@@ -75,9 +76,9 @@ func DecodeCombatantBytes(data []byte) (Combatant, error) {
 		EncounterID:  readInt32(data, &pos),
 		Name:         readString(data, &pos),
 		Job:          readString(data, &pos),
-		Damage:       readInt64(data, &pos),
-		DamageTaken:  readInt64(data, &pos),
-		DamageHealed: readInt64(data, &pos),
+		Damage:       readInt32(data, &pos),
+		DamageTaken:  readInt32(data, &pos),
+		DamageHealed: readInt32(data, &pos),
 		Deaths:       readInt32(data, &pos),
 		Hits:         readInt32(data, &pos),
 		Heals:        readInt32(data, &pos),
@@ -93,11 +94,11 @@ func DecodeCombatActionBytes(data []byte) (CombatAction, error) {
 	pos := 1
 	return CombatAction{
 		EncounterID: readInt32(data, &pos),
-		Tick:        readInt64(data, &pos),
+		Time:        readTime(data, &pos),
 		Sort:        readInt32(data, &pos),
 		Attacker:    readString(data, &pos),
 		Victim:      readString(data, &pos),
-		Damage:      readInt64(data, &pos),
+		Damage:      readInt32(data, &pos),
 		Skill:       readString(data, &pos),
 		SkillType:   readString(data, &pos),
 		SwingType:   readByte(data, &pos),
@@ -112,12 +113,12 @@ func DecodeLogLineBytes(data []byte) (LogLing, error) {
 	}
 	pos := 1
 	encounterID := readInt32(data, &pos)
-	tick := readInt64(data, &pos)
+	time := readTime(data, &pos)
 	logLineLength := readInt32(data, &pos)
 	logLine := string(data[pos : pos+int(logLineLength)])
 	return LogLing{
 		EncounterID: encounterID,
-		Tick:        tick,
+		Time:        time,
 		LogLine:     logLine,
 	}, nil
 }

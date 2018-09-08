@@ -2,16 +2,11 @@ package act
 
 import (
 	"encoding/binary"
+	"time"
 )
 
-func writeInt64(data *[]byte, value int64) {
-	buf := make([]byte, 8)
-	binary.BigEndian.PutUint64(buf, uint64(value))
-	*data = append(*data, buf...)
-}
-
 func writeInt32(data *[]byte, value int32) {
-	buf := make([]byte, 8)
+	buf := make([]byte, 4)
 	binary.BigEndian.PutUint32(buf, uint32(value))
 	*data = append(*data, buf...)
 }
@@ -36,13 +31,17 @@ func writeString(data *[]byte, value string) {
 	*data = append(*data, []byte(value)...)
 }
 
+func writeTime(data *[]byte, value time.Time) {
+	writeString(data, value.UTC().Format(time.RFC3339))
+}
+
 // EncodeEncounterBytes - Create Encounter byte array
 func EncodeEncounterBytes(value *Encounter) []byte {
 	data := make([]byte, 1)
 	data[0] = DataTypeEncounter
 	writeInt32(&data, value.ID)
-	writeInt64(&data, value.StartTick)
-	writeInt64(&data, value.EndTick)
+	writeTime(&data, value.StartTime)
+	writeTime(&data, value.EndTime)
 	writeString(&data, value.Zone)
 	writeBool(&data, value.Active)
 	writeByte(&data, value.SuccessLevel)
@@ -56,9 +55,9 @@ func EncodeCombatantBytes(value *Combatant) []byte {
 	writeInt32(&data, value.EncounterID)
 	writeString(&data, value.Name)
 	writeString(&data, value.Job)
-	writeInt64(&data, value.Damage)
-	writeInt64(&data, value.DamageTaken)
-	writeInt64(&data, value.DamageHealed)
+	writeInt32(&data, value.Damage)
+	writeInt32(&data, value.DamageTaken)
+	writeInt32(&data, value.DamageHealed)
 	writeInt32(&data, value.Deaths)
 	writeInt32(&data, value.Hits)
 	writeInt32(&data, value.Heals)
@@ -71,11 +70,11 @@ func EncodeCombatActionBytes(value *CombatAction) []byte {
 	data := make([]byte, 1)
 	data[0] = DataTypeCombatAction
 	writeInt32(&data, value.EncounterID)
-	writeInt64(&data, value.Tick)
+	writeTime(&data, value.Time)
 	writeInt32(&data, value.Sort)
 	writeString(&data, value.Attacker)
 	writeString(&data, value.Victim)
-	writeInt64(&data, value.Damage)
+	writeInt32(&data, value.Damage)
 	writeString(&data, value.Skill)
 	writeString(&data, value.SkillType)
 	writeByte(&data, value.SwingType)

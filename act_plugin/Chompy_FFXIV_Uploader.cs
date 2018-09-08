@@ -114,13 +114,10 @@ namespace ACT_Plugin
             udpClient.Send(sendBytes, sendBytes.Length);          
         }
 
-        void prepareInt64(ref List<Byte> sendData, Int64 value)
+        void prepareDateTime(ref List<Byte> sendData, DateTime value) 
         {
-            Byte[] valueBytes = BitConverter.GetBytes(value);
-            if (BitConverter.IsLittleEndian) {
-                 Array.Reverse(valueBytes);
-            }
-            sendData.AddRange(valueBytes);
+            string dateTimeString = value.ToString("o");
+            prepareString(ref sendData, dateTimeString);
         }
 
         void prepareInt32(ref List<Byte> sendData, Int32 value)
@@ -161,11 +158,11 @@ namespace ACT_Plugin
             List<Byte> sendData = new List<Byte>();
             sendData.Add(DATA_TYPE_COMBAT_ACTION);                         // declare data type
             prepareInt32(ref sendData, encounter.StartTime.GetHashCode()); // encounter id
-            prepareInt64(ref sendData, actionInfo.time.Ticks);             // time
+            prepareDateTime(ref sendData, actionInfo.time);                // time
             prepareInt32(ref sendData, actionInfo.timeSorter);             // sort for items with same time
             prepareString(ref sendData, actionInfo.attacker);              // attacker name
             prepareString(ref sendData, actionInfo.victim);                // victim name
-            prepareInt64(ref sendData, actionInfo.damage);                 // damage number
+            prepareInt32(ref sendData, (Int32) actionInfo.damage);         // damage number
             prepareString(ref sendData, actionInfo.theAttackType);         // skill name
             prepareString(ref sendData, actionInfo.theDamageType);         // skill type
             sendData.Add((byte) actionInfo.swingType);                     // "swing type"
@@ -193,8 +190,8 @@ namespace ACT_Plugin
             List<Byte> sendData = new List<Byte>();
             sendData.Add(DATA_TYPE_ENCOUNTER);                             // declare data type
             prepareInt32(ref sendData, ed.StartTime.GetHashCode());        // encounter id (start time hash code)
-            prepareInt64(ref sendData, ed.StartTime.Ticks);                // start time of encounter
-            prepareInt64(ref sendData, ed.EndTime.Ticks);                  // end time of encounter
+            prepareDateTime(ref sendData, ed.StartTime);                   // start time of encounter
+            prepareDateTime(ref sendData, ed.EndTime);                     // end time of encounter
             prepareString(ref sendData, ed.ZoneName);                      // zone name
             sendData.Add((byte) (ed.Active ? 1 : 0));                      // is still active encounter
             sendData.Add((byte) ed.GetEncounterSuccessLevel());            // success level of encounter
@@ -210,9 +207,9 @@ namespace ACT_Plugin
             prepareInt32(ref sendData, cd.StartTime.GetHashCode());        // encounter id
             prepareString(ref sendData, cd.Name);                          // combatant name
             prepareString(ref sendData, cd.GetColumnByName("Job"));        // combatant job (ffxiv)
-            prepareInt64(ref sendData, cd.Damage);                         // damage done
-            prepareInt64(ref sendData, cd.DamageTaken);                    // damage taken
-            prepareInt64(ref sendData, cd.Healed);                         // damage healed
+            prepareInt32(ref sendData, (Int32) cd.Damage);                 // damage done
+            prepareInt32(ref sendData, (Int32) cd.DamageTaken);            // damage taken
+            prepareInt32(ref sendData, (Int32) cd.Healed);                 // damage healed
             prepareInt32(ref sendData, cd.Deaths);                         // number of deaths
             prepareInt32(ref sendData, cd.Hits);                           // number of attacks
             prepareInt32(ref sendData, cd.Heals);                          // number of heals performed
@@ -232,7 +229,7 @@ namespace ACT_Plugin
             }
             prepareInt32(ref sendData, encounterId);
             // time
-            prepareInt64(ref sendData, logInfo.detectedTime.Ticks);
+            prepareDateTime(ref sendData, logInfo.detectedTime);
             // line
             Byte[] logLineBytes = Encoding.UTF8.GetBytes(logInfo.logLine);
             prepareInt32(ref sendData, logLineBytes.Length);

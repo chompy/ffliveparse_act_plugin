@@ -25,23 +25,20 @@ type Combatant struct {
 	EncounterID  int32
 	Name         string
 	Job          string
-	Damage       int64
-	DamageTaken  int64
-	DamageHealed int64
+	Damage       int32
+	DamageTaken  int32
+	DamageHealed int32
 	Deaths       int32
 	Hits         int32
 	Heals        int32
 	Kills        int32
 }
 
-// EncounterTickToMillisecondDivider - Amount to divide encounter ticks by to get milliseconds
-const EncounterTickToMillisecondDivider int64 = 10000
-
 // Encounter - Data about an encounter
 type Encounter struct {
 	ID           int32
-	StartTick    int64
-	EndTick      int64
+	StartTime    time.Time
+	EndTime      time.Time
 	Zone         string
 	Active       bool
 	SuccessLevel uint8
@@ -50,11 +47,11 @@ type Encounter struct {
 // CombatAction - Data about a specfic action
 type CombatAction struct {
 	EncounterID int32
-	Tick        int64
+	Time        time.Time
 	Sort        int32
 	Attacker    string
 	Victim      string
-	Damage      int64
+	Damage      int32
 	Skill       string
 	SkillType   string
 	SwingType   uint8
@@ -64,7 +61,7 @@ type CombatAction struct {
 // LogLing - Log line from Act
 type LogLing struct {
 	EncounterID int32
-	Tick        int64
+	Time        time.Time
 	LogLine     string
 }
 
