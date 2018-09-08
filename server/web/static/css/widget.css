@@ -1,0 +1,23 @@
+.widget {
+    background-color: #414141;
+    border: 1px solid #696969;
+}
+
+.widget .widgetHeader {
+    background-color: #b5b5b5;
+    border-bottom: 1px solid #696969;
+    color: #000;
+    padding: 5px;
+}
+
+.widget .widgetTitle {
+    display: inline-block;
+}
+
+.widget .widgetOptions {
+    float: right;
+}
+
+.widget .widgetBody {
+    padding: 8px 5px;
+}

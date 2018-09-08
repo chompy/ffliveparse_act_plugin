@@ -2,7 +2,6 @@ package main
 
 import (
 	"html/template"
-	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -57,7 +56,7 @@ func HTTPStartServer(port uint16, userManager *act.UserManager, events *emitter.
 		sessionID := strings.TrimLeft(r.URL.Path, "/")
 		// no session id, assume root, load index.html
 		if sessionID == "" {
-			io.WriteString(w, "No session key was provided.")
+			htmlTemplates.Lookup("error.tmpl").Execute(w, "No session key provided.")
 			return
 		}
 		// fetch user data
@@ -67,14 +66,14 @@ func HTTPStartServer(port uint16, userManager *act.UserManager, events *emitter.
 			userData = userManager.GetFirstUserDataWithIP(ip)
 			// user data not found
 			if userData == nil {
-				io.WriteString(w, "No sessions found.")
+				htmlTemplates.Lookup("error.tmpl").Execute(w, "No sessions found.")
 				return
 			}
 		} else {
 			userData = userManager.GetUserDataWithSessionID(sessionID)
 			// user data not found
 			if userData == nil {
-				io.WriteString(w, "Session "+sessionID+" was not found.")
+				htmlTemplates.Lookup("error.tmpl").Execute(w, "Session "+sessionID+" was not found.")
 				return
 			}
 		}

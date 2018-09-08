@@ -1,13 +1,13 @@
 {{template "header"}}
+<div id="errorOverlay" class="hide">
+    <div id="errorOverlayMessage" class="textCenter textBold">An error has occured.</div>
+</div>
+<div id="mainBody">
+    <div id="loadingMessage">Loading...</div>
+    <div id="widgetArea"></div>
+</div>
 <script type="text/javascript">
-    var socket = new WebSocket("ws://" + window.location.host + "/ws/{{.Session.ID}}");
-    socket.onopen = function(event) {
-        console.log(">> Connected to server.");
-        socket.send("Test 123");
-    };
-    socket.onmessage = function(event) {
-        console.log(">> Recieved message,", event.data);
-    }
+    var SESSION_ID = "{{.Session.ID}}";
 </script>
-hi {{.Session.ID}}
+<script type="text/javascript" src="/static/js/main.js"></script>
 {{template "footer"}}
