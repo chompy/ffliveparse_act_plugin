@@ -2,32 +2,31 @@ package main
 
 import (
 	"log"
-	"net"
+
+	"github.com/olebedev/emitter"
+
+	"./act"
 )
 
-// VersionNumber - Version number, must match number recieved from Act plugin to parse data
-const VersionNumber int32 = 1
+// ActListenUDPPort - Port act server will listen on
+const ActListenUDPPort uint16 = 31593
+
+// HTTPListenTCPPort - Port http server will listen on
+const HTTPListenTCPPort uint16 = 8081
 
 func main() {
-	serverAddr, err := net.ResolveUDPAddr("udp", ":31593")
-	if err != nil {
-		panic(err)
-	}
-	serverConn, err := net.ListenUDP("udp", serverAddr)
-	if err != nil {
-		panic(err)
-	}
-	defer serverConn.Close()
-	userManager := UserManager{}
-	buf := make([]byte, 1024)
-	for {
-		n, addr, err := serverConn.ReadFromUDP(buf)
-		if err != nil {
-			log.Panicln("Failed to read message from", addr, ",", err)
-		}
-		_, err = userManager.ParseDataString(buf[0:n], addr)
-		if err != nil {
-			log.Println("Error parsing data string from", addr, ",", err)
-		}
-	}
+	// log start
+	log.Println("Chompy ACT FFXIV Share Server -- Version", act.VersionNumber)
+
+	// create event emitter
+	events := emitter.Emitter{}
+
+	// create user manager
+	userManager := act.NewUserManager(&events)
+
+	// start http server
+	go HTTPStartServer(HTTPListenTCPPort, &userManager, &events)
+
+	// start act listen server
+	act.Listen(ActListenUDPPort, &userManager)
 }

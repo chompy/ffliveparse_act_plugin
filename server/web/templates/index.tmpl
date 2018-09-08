@@ -1,0 +1,13 @@
+{{template "header"}}
+<script type="text/javascript">
+    var socket = new WebSocket("ws://" + window.location.host + "/ws");
+    socket.onopen = function(event) {
+        console.log(">> Connected to server.");
+        socket.send("Test 123");
+    };
+    socket.onmessage = function(event) {
+        console.log(">> Recieved message,", event.data);
+    }
+</script>
+hi {{.Session.ID}}
+{{template "footer"}}
