@@ -35,15 +35,16 @@ func HTTPStartServer(port uint16, userManager *act.UserManager, events *emitter.
 		if userData == nil {
 			return
 		}
+		log.Println("New web user with session ID", sessionID, "from", ws.RemoteAddr())
 		// relay data to new user
 		activeEncounter := userData.GetActiveEncounter()
 		if activeEncounter != nil {
-			websocket.Message.Send(ws, activeEncounter.Raw)
+			websocket.Message.Send(ws, act.EncodeEncounterBytes(activeEncounter))
 			for _, combatant := range userData.GetCombatantsForEncounter(activeEncounter) {
-				websocket.Message.Send(ws, combatant.Raw)
+				websocket.Message.Send(ws, act.EncodeCombatantBytes(combatant))
 			}
 			for _, combatAction := range userData.GetCombatActionsForEncounter(activeEncounter) {
-				websocket.Message.Send(ws, combatAction.Raw)
+				websocket.Message.Send(ws, act.EncodeCombatActionBytes(combatAction))
 			}
 		}
 		// add websocket connection to global list

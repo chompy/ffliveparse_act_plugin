@@ -27,11 +27,10 @@ func NewUserManager(events *emitter.Emitter) UserManager {
 // ParseDataString - Parse incomming ACT data, match it to user data
 func (um *UserManager) ParseDataString(data []byte, addr *net.UDPAddr) (*UserData, error) {
 	userData := um.GetUserDataWithAddr(addr)
-
 	switch data[0] {
 	case DataTypeSession:
 		{
-			session, err := ParseSessionString(data, addr)
+			session, err := DecodeSessionBytes(data, addr)
 			if err != nil {
 				return nil, err
 			}
@@ -56,14 +55,14 @@ func (um *UserManager) ParseDataString(data []byte, addr *net.UDPAddr) (*UserDat
 				return nil, errors.New("recieved Encounter with no matching UserData")
 			}
 			// parse encounter data
-			encounter, err := ParseEncounterString(data)
+			encounter, err := DecodeEncounterBytes(data)
 			if err != nil {
 				return nil, err
 			}
 			// update user data
 			userData.UpdateEncounter(encounter)
-			// emit encounter update event
-			go um.events.Emit("act:encounter", encounter.Raw)
+			// forward data to web
+			go um.events.Emit("act:encounter", data)
 			// log
 			durMillis := (encounter.EndTick - encounter.StartTick) / EncounterTickToMillisecondDivider
 			log.Println(
@@ -90,14 +89,14 @@ func (um *UserManager) ParseDataString(data []byte, addr *net.UDPAddr) (*UserDat
 				return nil, errors.New("recieved Combatant with no matching UserData")
 			}
 			// parse combatant data
-			combatant, err := ParseCombatantString(data)
+			combatant, err := DecodeCombatantBytes(data)
 			if err != nil {
 				return nil, err
 			}
 			// update user data
 			userData.UpdateCombatant(combatant)
-			// emit combatant update event
-			go um.events.Emit("act:combatant", combatant.Raw)
+			// forward data to web
+			go um.events.Emit("act:combatant", data)
 			// log
 			log.Println(
 				"Update combatant",
@@ -124,14 +123,14 @@ func (um *UserManager) ParseDataString(data []byte, addr *net.UDPAddr) (*UserDat
 				return nil, errors.New("recieved CombatAction with no matching UserData")
 			}
 			// parse combat action data
-			combatAction, err := ParseCombatActionString(data)
+			combatAction, err := DecodeCombatActionBytes(data)
 			if err != nil {
 				return nil, err
 			}
 			// add combat action
 			userData.UpdateCombatAction(combatAction)
-			// emit combat action event
-			go um.events.Emit("act:combatAction", combatAction.Raw)
+			// forward data to web
+			go um.events.Emit("act:combatAction", data)
 			// log
 			log.Println(
 				"Combat action for encounter",
@@ -162,18 +161,17 @@ func (um *UserManager) ParseDataString(data []byte, addr *net.UDPAddr) (*UserDat
 				return nil, errors.New("recieved LogLing with no matching UserData")
 			}
 			// parse log line data
-			logLine, err := ParseLogLineString(data)
+			logLine, err := DecodeLogLineBytes(data)
 			if err != nil {
 				return nil, err
 			}
-			// emit log event
-			go um.events.Emit("act:logLine", logLine.Raw)
+			// forward data to web
+			go um.events.Emit("act:logLine", data)
 			// log
 			encounterString := "(none)"
 			if logLine.EncounterID > 0 {
 				encounterString = base36.Encode(uint64(logLine.EncounterID))
 			}
-
 			log.Println(
 				"Log line for session",
 				userData.Session.ID,
