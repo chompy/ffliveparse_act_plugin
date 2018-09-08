@@ -63,7 +63,7 @@ func (um *UserManager) ParseDataString(data []byte, addr *net.UDPAddr) (*UserDat
 			// update user data
 			userData.UpdateEncounter(encounter)
 			// emit encounter update event
-			go um.events.Emit("act:updateEncounter", encounter)
+			go um.events.Emit("act:encounter", encounter.Raw)
 			// log
 			durMillis := (encounter.EndTick - encounter.StartTick) / EncounterTickToMillisecondDivider
 			log.Println(
@@ -96,6 +96,8 @@ func (um *UserManager) ParseDataString(data []byte, addr *net.UDPAddr) (*UserDat
 			}
 			// update user data
 			userData.UpdateCombatant(combatant)
+			// emit combatant update event
+			go um.events.Emit("act:combatant", combatant.Raw)
 			// log
 			log.Println(
 				"Update combatant",
@@ -126,8 +128,10 @@ func (um *UserManager) ParseDataString(data []byte, addr *net.UDPAddr) (*UserDat
 			if err != nil {
 				return nil, err
 			}
-			// update user data
+			// add combat action
 			userData.UpdateCombatAction(combatAction)
+			// emit combat action event
+			go um.events.Emit("act:combatAction", combatAction.Raw)
 			// log
 			log.Println(
 				"Combat action for encounter",
@@ -162,7 +166,8 @@ func (um *UserManager) ParseDataString(data []byte, addr *net.UDPAddr) (*UserDat
 			if err != nil {
 				return nil, err
 			}
-			// TODO, log line data not retained, send it along to all active web socket connections and/or process triggers
+			// emit log event
+			go um.events.Emit("act:logLine", logLine.Raw)
 			// log
 			encounterString := "(none)"
 			if logLine.EncounterID > 0 {

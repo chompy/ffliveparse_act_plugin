@@ -58,6 +58,7 @@ func ParseSessionString(data []byte, addr *net.UDPAddr) (Session, error) {
 		return Session{}, errors.New("version number mismatch")
 	}
 	return Session{
+		Raw:  data,
 		ID:   readString(data, &pos),
 		IP:   addr.IP,
 		Port: addr.Port,
@@ -71,6 +72,7 @@ func ParseEncounterString(data []byte) (Encounter, error) {
 	}
 	pos := 1
 	return Encounter{
+		Raw:          data,
 		ID:           readInt32(data, &pos),
 		StartTick:    readInt64(data, &pos),
 		EndTick:      readInt64(data, &pos),
@@ -87,6 +89,7 @@ func ParseCombatantString(data []byte) (Combatant, error) {
 	}
 	pos := 1
 	return Combatant{
+		Raw:          data,
 		EncounterID:  readInt32(data, &pos),
 		Name:         readString(data, &pos),
 		Job:          readString(data, &pos),
@@ -107,6 +110,7 @@ func ParseCombatActionString(data []byte) (CombatAction, error) {
 	}
 	pos := 1
 	return CombatAction{
+		Raw:         data,
 		EncounterID: readInt32(data, &pos),
 		Tick:        readInt64(data, &pos),
 		Sort:        readInt32(data, &pos),
@@ -131,6 +135,7 @@ func ParseLogLineString(data []byte) (LogLing, error) {
 	logLineLength := readInt32(data, &pos)
 	logLine := string(data[pos : pos+int(logLineLength)])
 	return LogLing{
+		Raw:         data,
 		EncounterID: encounterID,
 		Tick:        tick,
 		LogLine:     logLine,

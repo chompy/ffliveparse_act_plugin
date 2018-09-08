@@ -1,6 +1,6 @@
 {{template "header"}}
 <script type="text/javascript">
-    var socket = new WebSocket("ws://" + window.location.host + "/ws");
+    var socket = new WebSocket("ws://" + window.location.host + "/ws/{{.Session.ID}}");
     socket.onopen = function(event) {
         console.log(">> Connected to server.");
         socket.send("Test 123");

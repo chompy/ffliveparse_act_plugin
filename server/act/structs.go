@@ -7,6 +7,7 @@ import (
 
 // Combatant - Data about a combatant
 type Combatant struct {
+	Raw          []byte
 	EncounterID  int32
 	Name         string
 	Job          string
@@ -24,6 +25,7 @@ const EncounterTickToMillisecondDivider int64 = 10000
 
 // Encounter - Data about an encounter
 type Encounter struct {
+	Raw          []byte
 	ID           int32
 	StartTick    int64
 	EndTick      int64
@@ -34,6 +36,7 @@ type Encounter struct {
 
 // CombatAction - Data about a specfic action
 type CombatAction struct {
+	Raw         []byte
 	EncounterID int32
 	Tick        int64
 	Sort        int32
@@ -48,6 +51,7 @@ type CombatAction struct {
 
 // LogLing - Log line from Act
 type LogLing struct {
+	Raw         []byte
 	EncounterID int32
 	Tick        int64
 	LogLine     string
@@ -55,6 +59,7 @@ type LogLing struct {
 
 // Session - Data about a specific session
 type Session struct {
+	Raw     []byte
 	ID      string
 	IP      net.IP
 	Port    int

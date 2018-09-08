@@ -28,8 +28,28 @@ func HTTPStartServer(port uint16, userManager *act.UserManager, events *emitter.
 	// serve static assets
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./web/static"))))
 	// setup websocket connections
-	http.Handle("/ws", websocket.Handler(func(ws *websocket.Conn) {
+	http.Handle("/ws/", websocket.Handler(func(ws *websocket.Conn) {
+		defer ws.Close()
+		// get session id and user data
+		sessionID := strings.Split(strings.TrimLeft(ws.Request().URL.Path, "/"), "/")[1]
+		userData := userManager.GetUserDataWithSessionID(sessionID)
+		if userData == nil {
+			return
+		}
+		// relay data to new user
+		activeEncounter := userData.GetActiveEncounter()
+		if activeEncounter != nil {
+			websocket.Message.Send(ws, activeEncounter.Raw)
+			for _, combatant := range userData.GetCombatantsForEncounter(activeEncounter) {
+				websocket.Message.Send(ws, combatant.Raw)
+			}
+			for _, combatAction := range userData.GetCombatActionsForEncounter(activeEncounter) {
+				websocket.Message.Send(ws, combatAction.Raw)
+			}
+		}
+		// add websocket connection to global list
 		websocketConnections = append(websocketConnections, ws)
+		// listen/wait for incomming messages
 		wsReader(ws, userManager)
 	}))
 	// setup main page/index
@@ -96,8 +116,8 @@ func wsReader(ws *websocket.Conn, userManager *act.UserManager) {
 			log.Println("Error occured while reading web socket message,", err)
 			break
 		}
-		log.Println("Recieved websocket message")
-		websocket.Message.Send(ws, "TEST 123")
+		// nothing todo
+		log.Println("Recieved websocket message", data)
 	}
 }
 
@@ -106,13 +126,11 @@ func globalWsWriter(websocketConnections *[]*websocket.Conn, events *emitter.Emi
 		if websocketConnections == nil {
 			break
 		}
-		for event := range events.On("act:updateEncounter") {
-			encounter := event.Args[0].(act.Encounter)
-			log.Println(encounter.ID)
+		for event := range events.On("act:*") {
 			for _, websocketConnection := range *websocketConnections {
 				websocket.Message.Send(
 					websocketConnection,
-					"TEST",
+					event.Args[0],
 				)
 			}
 		}
