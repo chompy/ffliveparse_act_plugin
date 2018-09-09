@@ -95,6 +95,17 @@ func (ud *UserData) GetActiveEncounter() *Encounter {
 	return nil
 }
 
+// GetLastEncounter - Get most recent encounter, if any
+func (ud *UserData) GetLastEncounter() *Encounter {
+	var encounter *Encounter
+	for index, storedEncounter := range ud.Encounters {
+		if encounter == nil || encounter.StartTime.Before(storedEncounter.StartTime) {
+			encounter = &ud.Encounters[index]
+		}
+	}
+	return encounter
+}
+
 // GetCombatantsForEncounter - Given an encounter get list of allied combatants
 func (ud *UserData) GetCombatantsForEncounter(encounter *Encounter) []*Combatant {
 	var combatants []*Combatant

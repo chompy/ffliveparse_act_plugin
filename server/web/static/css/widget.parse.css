@@ -1,0 +1,83 @@
+.widget-parse .parseColumns {
+    margin-bottom: 10px;
+    padding: 5px;
+    border-bottom: 1px solid #fff;
+}
+
+.widget-parse .parseCombatant {
+    padding: 5px;
+}
+
+.widget-parse .parseCombatant:nth-child(odd) {
+    background-color: #b5b5b5;
+    color: #000;
+}
+
+.widget-parse .parseCombatantJob, .widget-parse .parseColumnJob {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 25px;
+    width: 5%;
+    text-align: center;
+}
+
+.widget-parse .parseCombatantJob img {
+    max-width: 38px;
+    max-height: 38px;
+    vertical-align: middle
+}
+
+.widget-parse .parseCombatantDamage, .widget-parse .parseColumnDPS {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 25px;
+    width: 25%;
+}
+
+.widget-parse .parseCombatantHealing, .widget-parse .parseColumnHPS {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 25px;
+    width: 25%;
+}
+
+.widget-parse .parseCombatantDamage .parseCombatantDamagePercent,
+.widget-parse .parseCombatantHealing .parseCombatantHealingPercent {
+    font-size: 12px;
+}
+
+.widget-parse .parseCombatantDamage .parseCombatantDamagePercent::before,
+.widget-parse .parseCombatantHealing .parseCombatantHealingPercent::before {
+    display:inline;
+    content:"(";
+    margin-left:5px;
+}
+
+.widget-parse .parseCombatantDamage .parseCombatantDamagePercent::after,
+.widget-parse .parseCombatantHealing .parseCombatantHealingPercent::after {
+    display:inline;
+    content:")";
+}
+
+.widget-parse .parseCombatantDeaths, .widget-parse .parseColumnDeaths {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 25px;
+    width: 15%;
+}
+
+@media(max-width: 512px) {
+    .widget-parse .parseCombatantJob, .widget-parse .parseColumnJob {
+        width: 10%;
+    }
+    .widget-parse .parseCombatantDamage .parseCombatantDamagePercent,
+    .widget-parse .parseCombatantHealing .parseCombatantHealingPercent {
+        font-size: 10px;
+    }
+    .widget-parse .parseCombatantDamage, .widget-parse .parseColumnDPS {
+        width: 30%;
+    }
+    .widget-parse .parseCombatantDeaths, .widget-parse .parseColumnDeaths {
+        display: none;
+    }
+}   

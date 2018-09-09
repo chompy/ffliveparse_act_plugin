@@ -45,8 +45,12 @@ function decodeEncounterBytes(data)
     output["Zone"]          = readString(data, pos); pos += 1 + output["Zone"].length;
     output["Active"]        = readByte(data, pos) != 0; pos += SIZE_BYTE;
     output["SuccessLevel"]  = readByte(data, pos); pos += SIZE_BYTE;
+    
     output["StartTime"]     = new Date(output["StartTime"]);
-    output["EndTime"]       = new Date(output["StartTime"]);
+    output["EndTime"]       = new Date(output["EndTime"]);
+    window.dispatchEvent(
+        new CustomEvent("act:encounter", {"detail" : output})
+    );
     return output;
 }
 
@@ -69,6 +73,9 @@ function decodeCombatantBytes(data)
     output["Hits"]          = readInt32(data, pos); pos += SIZE_INT32;
     output["Heals"]         = readInt32(data, pos); pos += SIZE_INT32;
     output["Kills" ]        = readInt32(data, pos); pos += SIZE_INT32;
+    window.dispatchEvent(
+        new CustomEvent("act:combatant", {"detail" : output})
+    );
     return output;
 }
 
@@ -91,6 +98,9 @@ function decodeCombatActionBytes(data)
     output["SkillType"]     = readString(data, pos); pos += 1+output["SkillType"].length;
     output["SwingType"]     = readByte(data, pos); pos += SIZE_BYTE;
     output["Critical"]      = readByte(data, pos) != 0; pos += SIZE_BYTE;
+    window.dispatchEvent(
+        new CustomEvent("act:combatAction", {"detail" : output})
+    );
     return output;
 }
 
@@ -107,6 +117,9 @@ function decodeLogLineBytes(data)
     output["Time"]          = readString(data, pos); pos += 1+output["Time"].length;
     logLineLength           = readInt32(data, pos); pos += SIZE_INT32;
     output["LogLine"]       = new TextDecoder("utf-8").decode(data.slice(pos + 1, pos + 1 + logLineLength));
+    window.dispatchEvent(
+        new CustomEvent("act:logLine", {"detail" : output})
+    );
     return output;
 }
 

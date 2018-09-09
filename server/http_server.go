@@ -37,13 +37,13 @@ func HTTPStartServer(port uint16, userManager *act.UserManager, events *emitter.
 		}
 		log.Println("New web user with session ID", sessionID, "from", ws.RemoteAddr())
 		// relay data to new user
-		activeEncounter := userData.GetActiveEncounter()
-		if activeEncounter != nil {
-			websocket.Message.Send(ws, act.EncodeEncounterBytes(activeEncounter))
-			for _, combatant := range userData.GetCombatantsForEncounter(activeEncounter) {
+		lastEncounter := userData.GetLastEncounter()
+		if lastEncounter != nil {
+			websocket.Message.Send(ws, act.EncodeEncounterBytes(lastEncounter))
+			for _, combatant := range userData.GetCombatantsForEncounter(lastEncounter) {
 				websocket.Message.Send(ws, act.EncodeCombatantBytes(combatant))
 			}
-			for _, combatAction := range userData.GetCombatActionsForEncounter(activeEncounter) {
+			for _, combatAction := range userData.GetCombatActionsForEncounter(lastEncounter) {
 				websocket.Message.Send(ws, act.EncodeCombatActionBytes(combatAction))
 			}
 		}
@@ -55,14 +55,9 @@ func HTTPStartServer(port uint16, userManager *act.UserManager, events *emitter.
 	// setup main page/index
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		sessionID := strings.TrimLeft(r.URL.Path, "/")
-		// no session id, assume root, load index.html
-		if sessionID == "" {
-			htmlTemplates.Lookup("error.tmpl").Execute(w, "No session key provided.")
-			return
-		}
 		// fetch user data
 		var userData *act.UserData
-		if sessionID == "me" {
+		if sessionID == "" {
 			ip := strings.Split(r.RemoteAddr, ":")[0]
 			userData = userManager.GetFirstUserDataWithIP(ip)
 			// user data not found
