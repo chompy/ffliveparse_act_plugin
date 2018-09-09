@@ -1,4 +1,5 @@
 var WIDGET_ELEMENT_ID = "widgetArea";
+var USER_CONFIG_LOCAL_STORAGE_KEY = "chompy_ffxiv_user_config";
 
 /**
  * Widget option class.
@@ -33,6 +34,8 @@ class WidgetBase
     constructor()
     {
         this.element = null;
+        this.userConfig = {};
+        this._loadUserConfig();
     }
 
     /**
@@ -153,6 +156,38 @@ class WidgetBase
     showOptionHelp()
     {
         alert("Widget help here!");
+    }
+
+    /**
+     * Load user config from local storage and
+     * set userConfig var.
+     */
+    _loadUserConfig()
+    {
+        this.userConfig = {};
+        var userConfig = JSON.parse(window.localStorage.getItem(USER_CONFIG_LOCAL_STORAGE_KEY));
+        if (!userConfig) {
+            return;
+        }
+        if (this.getName() in userConfig) {
+            this.userConfig = userConfig[this.getName()];
+        }
+    }
+
+    /**
+     * Save userConfig var to local storage.
+     */
+    _saveUserConfig()
+    {
+        var userConfig = JSON.parse(window.localStorage.getItem(USER_CONFIG_LOCAL_STORAGE_KEY));
+        if (!userConfig) {
+            userConfig = {};
+        }
+        userConfig[this.getName()] = this.userConfig;
+        window.localStorage.setItem(
+            USER_CONFIG_LOCAL_STORAGE_KEY,
+            JSON.stringify(userConfig)
+        );
     }
 
 }

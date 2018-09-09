@@ -114,6 +114,9 @@ class WidgetEncounter extends WidgetBase
                 totalDamage += this.combatants[i].Damage;
             }
         }
+        if (isNaN(totalDamage) || !totalDamage || totalDamage < 0) {
+            totalDamage = 0;
+        }
         this.getBodyElement().getElementsByClassName("encounterRaidDps")[0].innerText = (totalDamage / (duration / 1000)).toFixed(2);
     }
 

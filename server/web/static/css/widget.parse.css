@@ -1,4 +1,4 @@
-.widget-parse .parseColumns {
+.widget-parse .parseColumnHeads {
     margin-bottom: 10px;
     padding: 5px;
     border-bottom: 1px solid #fff;
@@ -13,32 +13,23 @@
     color: #000;
 }
 
-.widget-parse .parseCombatantJob, .widget-parse .parseColumnJob {
+.widget-parse .parseColumn {
     display: inline-block;
     vertical-align: middle;
-    margin-right: 25px;
-    width: 5%;
-    text-align: center;
+    margin-right: 2%;
+    width: 10%;
+    overflow: hidden;
 }
 
-.widget-parse .parseCombatantJob img {
+.widget-parse .parseColumn-job {
+    text-align: center;
+    max-width: 42px;
+}
+
+.widget-parse .parseColumn-job img {
     width: 38px;
     height: 38px;
     vertical-align: middle
-}
-
-.widget-parse .parseCombatantDamage, .widget-parse .parseColumnDPS {
-    display: inline-block;
-    vertical-align: middle;
-    margin-right: 25px;
-    width: 25%;
-}
-
-.widget-parse .parseCombatantHealing, .widget-parse .parseColumnHPS {
-    display: inline-block;
-    vertical-align: middle;
-    margin-right: 25px;
-    width: 25%;
 }
 
 .widget-parse .parseCombatantDamage .parseCombatantDamagePercent,
@@ -65,19 +56,3 @@
     margin-right: 25px;
     width: 15%;
 }
-
-@media(max-width: 512px) {
-    .widget-parse .parseCombatantJob, .widget-parse .parseColumnJob {
-        width: 10%;
-    }
-    .widget-parse .parseCombatantDamage .parseCombatantDamagePercent,
-    .widget-parse .parseCombatantHealing .parseCombatantHealingPercent {
-        font-size: 10px;
-    }
-    .widget-parse .parseCombatantDamage, .widget-parse .parseColumnDPS {
-        width: 30%;
-    }
-    .widget-parse .parseCombatantDeaths, .widget-parse .parseColumnDeaths {
-        display: none;
-    }
-}   
