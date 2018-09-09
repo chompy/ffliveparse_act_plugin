@@ -183,6 +183,12 @@ class WidgetParse extends WidgetBase
     displayCombatants()
     {
         var combatantContainerElement = this.getBodyElement().getElementsByClassName("parseCombatants")[0];
+        var duration = this.getDuration();
+        this.combatants.sort(function(a, b) {
+            var aDps = (a[0].Damage / (duration / 1000));
+            var bDps = (b[0].Damage / (duration / 1000));
+            return bDps - aDps;
+        })
         for (var i = 0; i < this.combatants.length; i++) {
             combatantContainerElement.appendChild(this.combatants[i][1]);
         }

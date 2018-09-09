@@ -16,9 +16,8 @@ namespace ACT_Plugin
     public class Chompy_FFXIV_Uploader : IActPluginV1
     {
 
-        const string REMOTE_HOST = "localhost";         // Remote host name to send data to
+        const string REMOTE_HOST = "localhost";   // Remote host name to send data to
         const UInt16 REMOTE_PORT = 31593;               // Remote port
-        //const UInt16 REMOTE_PORT = 65495;               // Remote port
         
         const string UID_CHAR_LIST = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         const int UID_SIZE = 5;

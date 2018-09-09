@@ -178,7 +178,8 @@ func (um *UserManager) ParseDataString(data []byte, addr *net.UDPAddr) (*UserDat
 				"and encounter",
 				encounterString,
 				",",
-				logLine.LogLine,
+				len(logLine.LogLine),
+				"bytes",
 			)
 		}
 	default:
