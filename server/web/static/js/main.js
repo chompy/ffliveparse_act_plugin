@@ -1,7 +1,7 @@
 document.getElementById("siteHeader").innerHTML = window.location.host + "/" + SESSION_ID;
 window.addEventListener("load", function(e) {
 
-    var socket = new WebSocket("ws://" + window.location.host + "/ws/" + SESSION_ID);
+    var socket = new WebSocket("wss://" + window.location.host + "/ws/" + SESSION_ID);
     socket.onopen = function(event) {
         document.getElementById("loadingMessage").remove();
         console.log(">> Connected to server.");
