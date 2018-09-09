@@ -1,7 +1,8 @@
 document.getElementById("siteHeader").innerHTML = window.location.host + "/" + SESSION_ID;
 window.addEventListener("load", function(e) {
-
-    var socket = new WebSocket("wss://" + window.location.host + "/ws/" + SESSION_ID);
+    var socket = new WebSocket(
+        (window.location.protocol == "https" ? "wss" : "ws") + "://" + window.location.host + "/ws/" + SESSION_ID
+    );
     socket.onopen = function(event) {
         document.getElementById("loadingMessage").remove();
         console.log(">> Connected to server.");
@@ -14,7 +15,9 @@ window.addEventListener("load", function(e) {
         fileReader.onload = function(event) {
             var byteArray = new Uint8Array(event.target.result);
             var data = parseMessage(byteArray);
-            console.log(">> Recieved message,", data);
+            if (data.Type != DATA_TYPE_LOG_LINE) {
+                console.log(">> Recieved message,", data);
+            }
         };
         fileReader.readAsArrayBuffer(event.data);
     };
@@ -26,6 +29,5 @@ window.addEventListener("load", function(e) {
         document.getElementById("errorOverlay").classList.remove("hide");
         console.log(">> An error has occured.");
     };
-
 });
 

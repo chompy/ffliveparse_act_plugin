@@ -149,7 +149,7 @@ func (um *UserManager) ParseDataString(data []byte, addr *net.UDPAddr) (*UserDat
 				combatAction.Critical,
 				", SwingType:",
 				combatAction.SwingType,
-				"TotalCombatActions:",
+				", TotalCombatActions:",
 				len(userData.CombatActions),
 				")",
 			)
@@ -161,14 +161,14 @@ func (um *UserManager) ParseDataString(data []byte, addr *net.UDPAddr) (*UserDat
 				return nil, errors.New("recieved LogLing with no matching UserData")
 			}
 			// parse log line data
-			logLine, err := DecodeLogLineBytes(data)
+			/*logLine, err := DecodeLogLineBytes(data)
 			if err != nil {
 				return nil, err
-			}
+			}*/
 			// forward data to web
 			go um.events.Emit("act:logLine", data)
 			// log
-			encounterString := "(none)"
+			/*encounterString := "(none)"
 			if logLine.EncounterID > 0 {
 				encounterString = base36.Encode(uint64(uint32(logLine.EncounterID)))
 			}
@@ -180,7 +180,7 @@ func (um *UserManager) ParseDataString(data []byte, addr *net.UDPAddr) (*UserDat
 				",",
 				len(logLine.LogLine),
 				"bytes",
-			)
+			)*/
 		}
 	default:
 		{

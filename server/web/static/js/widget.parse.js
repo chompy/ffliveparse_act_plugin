@@ -69,6 +69,7 @@ class WidgetParse extends WidgetBase
     reset()
     {
         this.getBodyElement().getElementsByClassName("parseCombatants")[0].innerHTML = "";
+        this.combatants = [];
         this.encounterStartTime = null;
         this.encounterEndTime = null;
     }
@@ -84,8 +85,14 @@ class WidgetParse extends WidgetBase
         var jobIconElement = document.createElement("div");
         jobIconElement.classList.add("parseCombatantJob");
         var jobIconImageElement = document.createElement("img");
-        jobIconImageElement.classList.add("parseCombatantJobImage");
+        jobIconImageElement.classList.add("parseCombatantJobImage", "loading");
         jobIconElement.appendChild(jobIconImageElement);
+        jobIconImageElement.addEventListener("load", function(e) {
+            e.target.classList.remove("loading");
+        });
+        jobIconImageElement.addEventListener("error", function(e) {
+            e.target.src = "/static/img/job_none.png";
+        })
         element.appendChild(jobIconElement);
         // damage
         var damageElement = document.createElement("div");

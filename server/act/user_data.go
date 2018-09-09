@@ -2,6 +2,8 @@ package act
 
 import (
 	"log"
+
+	"github.com/martinlindhe/base36"
 )
 
 // UserData - Data about a single user
@@ -33,20 +35,25 @@ func (ud *UserData) UpdateEncounter(encounter Encounter) {
 	}
 	// add new
 	ud.Encounters = append(ud.Encounters, encounter)
-	log.Println("Add encounter", encounter.ID, "to session", ud.Session.ID, "(TotalEncounters:", len(ud.Encounters), ")")
+	log.Println("Add encounter", base36.Encode(uint64(uint32(encounter.ID))), "to session", ud.Session.ID, "(TotalEncounters:", len(ud.Encounters), ")")
 }
 
 // UpdateCombatant - Add or update combatant data
 func (ud *UserData) UpdateCombatant(combatant Combatant) {
 	// look for existing, update if found
+	numCombatants := 0 // count number of combatants in encounter
 	for index, storedCombatant := range ud.Combatants {
-		if storedCombatant.EncounterID == combatant.EncounterID && storedCombatant.Name == combatant.Name {
-			ud.Combatants[index] = combatant
-			return
+		if storedCombatant.EncounterID == combatant.EncounterID {
+			numCombatants++
+			if storedCombatant.Name == combatant.Name {
+				ud.Combatants[index] = combatant
+				return
+			}
 		}
 	}
 	// add new
 	ud.Combatants = append(ud.Combatants, combatant)
+	log.Println("Add combatant", combatant.Name, "to encounter", combatant.EncounterID, "(TotalCombatants:", numCombatants+1, ")")
 }
 
 // UpdateCombatAction - Add combat action

@@ -152,7 +152,7 @@ namespace ACT_Plugin
                 return;
             }
             // get encounter
-            EncounterData encounter = ActGlobals.oFormActMain.ActiveZone.ActiveEncounter;
+            EncounterData encounter = actionInfo.combatAction.ParentEncounter;
             // build send data
             List<Byte> sendData = new List<Byte>();
             sendData.Add(DATA_TYPE_COMBAT_ACTION);                         // declare data type
@@ -203,7 +203,7 @@ namespace ACT_Plugin
             // build send data
             List<Byte> sendData = new List<Byte>();
             sendData.Add(DATA_TYPE_COMBATANT);                             // declare data type
-            prepareInt32(ref sendData, cd.StartTime.GetHashCode());        // encounter id
+            prepareInt32(ref sendData, cd.EncStartTime.GetHashCode());     // encounter id
             prepareString(ref sendData, cd.Name);                          // combatant name
             prepareString(ref sendData, cd.GetColumnByName("Job"));        // combatant job (ffxiv)
             prepareInt32(ref sendData, (Int32) cd.Damage);                 // damage done
