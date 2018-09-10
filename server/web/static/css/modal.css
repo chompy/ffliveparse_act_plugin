@@ -76,3 +76,12 @@
     opacity: 1;
     filter: grayscale(0%);
 }
+
+#modalBody .modalTextArea textarea {
+    width: 90%;
+}
+
+#modalBody .modalButtons {
+    margin-top: 8px;
+    margin-bottom: 5px;
+}

@@ -58,8 +58,17 @@ func HTTPStartServer(port uint16, userManager *act.UserManager, events *emitter.
 		// fetch user data
 		var userData *act.UserData
 		if sessionID == "" {
-			ip := strings.Split(r.RemoteAddr, ":")[0]
-			userData = userManager.GetFirstUserDataWithIP(ip)
+			// attempt to fetch user data with ip address
+			addresses := make([]string, 1)
+			addresses[0] = r.RemoteAddr
+			addresses = append(addresses, strings.Split(r.Header.Get("X-Forwarded-For"), ",")...)
+			for _, address := range addresses {
+				ip := strings.TrimSpace(strings.Split(address, ":")[0])
+				userData = userManager.GetFirstUserDataWithIP(ip)
+				if userData != nil {
+					break
+				}
+			}
 			// user data not found
 			if userData == nil {
 				htmlTemplates.Lookup("error.tmpl").Execute(w, "No sessions found.")

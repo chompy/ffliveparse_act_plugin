@@ -313,8 +313,9 @@ class WidgetParse extends WidgetBase
     {
         var combatantContainerElement = this.getBodyElement().getElementsByClassName("parseCombatants")[0];
         var duration = this.getDuration();
+        var t = this;
         this.combatants.sort(function(a, b) {
-            switch (this.userConfig["sortBy"])
+            switch (t.userConfig["sortBy"])
             {
                 case "healing":
                 {
@@ -329,6 +330,23 @@ class WidgetParse extends WidgetBase
                 case "name":
                 {
                     return a[0].Name.localeCompare(b[0].Name);
+                }
+                case "job":
+                {
+                    var jobCats = [
+                        ["WAR", "DRK", "PLD"],  // tanks
+                        ["SCH", "WHM", "AST"]   // healers
+                    ];
+                    for (var i in jobCats) {
+                        var indexA = jobCats[i].indexOf(a[0].Job.toUpperCase());
+                        var indexB = jobCats[i].indexOf(b[0].Job.toUpperCase());
+                        if (indexA != -1 && indexB == -1) {
+                            return -1;
+                        } else if (indexA == -1 && indexB != -1) {
+                            return 1;
+                        }
+                    }
+                    return a[0].Job.localeCompare(b[0].Job);
                 }
                 default:
                 case "damage":

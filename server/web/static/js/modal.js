@@ -170,4 +170,39 @@ class Modal
         Modal.getModalBodyElement().appendChild(choicesContainerElement);
     }
 
+    static addTextArea(name, value, callback)
+    {
+        var textareaContainerElement = document.createElement("div");
+        textareaContainerElement.classList.add(
+            "modalTextArea",
+            "modalTextArea-" + name
+        );
+        var textAreaElement = document.createElement("textarea");
+        textAreaElement.name = name;
+        if (value) {
+            textAreaElement.innerText = value;
+        }
+        textareaContainerElement.appendChild(textAreaElement);
+        Modal.getModalBodyElement().appendChild(textareaContainerElement);
+    }
+
+    static addButtons(buttons, callback)
+    {
+        var buttonsContainerElement = document.createElement("div");
+        buttonsContainerElement.classList.add("modalButtons");
+        for (var key in buttons) {
+            var buttonElement = document.createElement("button");
+            buttonElement.name = key;
+            buttonElement.innerText = buttons[key];
+            buttonsContainerElement.appendChild(buttonElement);
+            if (callback) {
+                var callback = callback;
+                buttonElement.addEventListener("click", function(e) {
+                    callback(e.target.name);
+                });
+            }
+        }
+        Modal.getModalBodyElement().appendChild(buttonsContainerElement);
+    }
+
 }
