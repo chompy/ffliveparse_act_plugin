@@ -117,7 +117,11 @@ class WidgetEncounter extends WidgetBase
         if (isNaN(totalDamage) || !totalDamage || totalDamage < 0) {
             totalDamage = 0;
         }
-        this.getBodyElement().getElementsByClassName("encounterRaidDps")[0].innerText = (totalDamage / (duration / 1000)).toFixed(2);
+        var raidDps = (totalDamage / (duration / 1000));
+        if (isNaN(raidDps) || !raidDps || raidDps < 0) {
+            raidDps = 0;
+        }
+        this.getBodyElement().getElementsByClassName("encounterRaidDps")[0].innerText = raidDps.toFixed(2);
     }
 
     /**

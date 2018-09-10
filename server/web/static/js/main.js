@@ -31,4 +31,3 @@ window.addEventListener("load", function(e) {
         console.log(">> An error has occured.");
     };
 });
-

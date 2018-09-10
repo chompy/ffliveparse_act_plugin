@@ -55,7 +55,7 @@ namespace ACT_Plugin
             ActGlobals.oFormActMain.AfterCombatAction += new CombatActionDelegate(oFormActMain_AfterCombatAction);
             ActGlobals.oFormActMain.OnLogLineRead += new LogLineEventDelegate(oFormActMain_OnLogLineRead);
             // update plugin status text
-            lblStatus.Text = "Plugin version " + VERSION_NUMBER + " started with session id " + sessionUid + ".";
+            lblStatus.Text = "Plugin version " + ((float) VERSION_NUMBER / 100.0).ToString("n2") + " started with session id " + sessionUid + ".";
         }
 
         public void DeInitPlugin()

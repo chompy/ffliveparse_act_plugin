@@ -200,14 +200,15 @@ func (um *UserManager) GetUserDataWithAddr(addr *net.UDPAddr) *UserData {
 	return nil
 }
 
-// GetFirstUserDataWithIP - Retrieve first available user data object with given ip address
-func (um *UserManager) GetFirstUserDataWithIP(ip string) *UserData {
+// GetLastUserDataWithIP - Retrieve last available user data object with given ip address
+func (um *UserManager) GetLastUserDataWithIP(ip string) *UserData {
+	var lastUserData *UserData
 	for index, userData := range um.userDataList {
 		if userData.Session.IP.String() == ip {
-			return &um.userDataList[index]
+			lastUserData = &um.userDataList[index]
 		}
 	}
-	return nil
+	return lastUserData
 }
 
 // GetUserDataWithSessionID - Retrieve user data with session id

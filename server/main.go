@@ -16,7 +16,7 @@ const HTTPListenTCPPort uint16 = 8081
 
 func main() {
 	// log start
-	log.Println("Chompy ACT FFXIV Share Server -- Version", act.VersionNumber)
+	log.Printf("Chompy ACT FFXIV Share Server -- Version %.2f\n", (float32(act.VersionNumber) / 100.0))
 
 	// create event emitter
 	events := emitter.Emitter{}

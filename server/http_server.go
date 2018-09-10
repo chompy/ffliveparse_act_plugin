@@ -15,6 +15,11 @@ import (
 	"./act"
 )
 
+type templateData struct {
+	SessionID     string
+	VersionNumber int
+}
+
 // HTTPStartServer - Start HTTP server
 func HTTPStartServer(port uint16, userManager *act.UserManager, events *emitter.Emitter) {
 	// load html templates
@@ -64,7 +69,7 @@ func HTTPStartServer(port uint16, userManager *act.UserManager, events *emitter.
 			addresses = append(addresses, strings.Split(r.Header.Get("X-Forwarded-For"), ",")...)
 			for _, address := range addresses {
 				ip := strings.TrimSpace(strings.Split(address, ":")[0])
-				userData = userManager.GetFirstUserDataWithIP(ip)
+				userData = userManager.GetLastUserDataWithIP(ip)
 				if userData != nil {
 					break
 				}

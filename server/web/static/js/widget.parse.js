@@ -31,6 +31,7 @@ class WidgetParse extends WidgetBase
     constructor()
     {
         super();
+        this.encounterId = null;
         this.encounterStartTime = null;
         this.encounterEndTime = null;
         this.encounterOffset = 6000;
@@ -380,14 +381,16 @@ class WidgetParse extends WidgetBase
 
     updateEncounter(event)
     {
-        // new encounter active
-        if (this.encounterEndTime && event.detail.Active) {
+        // new encounter
+        if (this.encounterId != event.detail.ID) {
             this.reset();
+            this.encounterId = event.detail.ID;
         }
         // inactive
         if (!event.detail.Active) {
             this.encounterEndTime = event.detail.EndTime;
         }
+        // update start time
         this.encounterStartTime = event.detail.StartTime;
         // update combatant elements
         for (var i in this.combatants) {
@@ -404,6 +407,10 @@ class WidgetParse extends WidgetBase
     updateCombatants(event)
     {
         var combatant = event.detail;
+        // must be part of same encounter
+        if (combatant.EncounterID != this.encounterId) {
+            return;
+        }
         // update existing
         for (var i = 0; i < this.combatants.length; i++) {
             if (this.combatants[i][0].Name == combatant.Name) {
@@ -437,7 +444,7 @@ class WidgetParse extends WidgetBase
     {
         var t = this;
         Modal.reset();
-        Modal.open();
+        Modal.open(); 
         // parse column selection
         Modal.addSection("Parse Columns");
         for (var i in PARSE_AVAILABLE_COLUMNS) {
