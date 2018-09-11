@@ -8,6 +8,7 @@ class WidgetTrigger extends WidgetBase
     {
         super();
         this.currentZone = "";
+        this.logLineCount = 0;
         if (!("triggers" in this.userConfig)) {
             this.userConfig["triggers"] = [];
             this._saveUserConfig()
@@ -45,15 +46,21 @@ class WidgetTrigger extends WidgetBase
         if (!bodyElement) {
             return;
         }
+        var triggerDetailsElement = document.createElement("div");
+        triggerDetailsElement.classList.add("triggerDetails");
+        triggerDetailsElement.innerText = "Loading...";
+        bodyElement.appendChild(triggerDetailsElement);
+
         var triggerContainerElement = document.createElement("div");
         triggerContainerElement.classList.add("triggerContainer");
         bodyElement.appendChild(triggerContainerElement);
         // hook events
         var t = this;
-        window.addEventListener("act:logLine", function(e) { t.processLogLine(e); });
-        window.addEventListener("act:encounter", function(e) { t.processEncounter(e); });
+        window.addEventListener("act:logLine", function(e) { t._processLogLine(e); });
+        window.addEventListener("act:encounter", function(e) { t._processEncounter(e); });
+        // display trigger details
+        this._updateTriggerDetails();
     }
-
     
     showOptionHelp()
     {
@@ -85,7 +92,7 @@ class WidgetTrigger extends WidgetBase
                 "deleteAll"         : "Delete ALL"
             },
             function(name) {
-                t.triggerButtonPress(name);
+                t._triggerButtonPress(name);
             }
         )
         Modal.addSection("XML Import");
@@ -95,15 +102,20 @@ class WidgetTrigger extends WidgetBase
                 "addXml" : "Import"
             },
             function(e) {
-                t.importXml(
+                t._importXml(
                     Modal.getModalBodyElement().getElementsByClassName("modalTextArea-xmlText")[0].getElementsByTagName("textarea")[0].value
                 );
             }
         );
     }
 
-    processLogLine(event)
+    /**
+     * Process a log line event.
+     * @param {Event} event 
+     */
+    _processLogLine(event)
     {
+        this.logLineCount++;
         for (var i in this.userConfig["triggers"]) {
             var trigger = this.userConfig["triggers"][i];
             // restrict trigger to specific zone
@@ -112,12 +124,16 @@ class WidgetTrigger extends WidgetBase
             }
             // check regex
             if (event.detail.LogLine.match(trigger.regex)) {
-                this.addTriggerMessage(trigger.message);
+                this._addTriggerMessage(trigger.message);
             }
         }
     }
 
-    processEncounter(event)
+    /**
+     * Process a encounter event.
+     * @param {Event} event 
+     */
+    _processEncounter(event)
     {
         this.currentZone = event.detail.Zone;
     }
@@ -126,7 +142,7 @@ class WidgetTrigger extends WidgetBase
      * Add new trigger message, display and speak it.
      * @param {string} message 
      */
-    addTriggerMessage(message)
+    _addTriggerMessage(message)
     {
         var triggerItemElement = document.createElement("div");
         triggerItemElement.classList.add("triggerItem");
@@ -147,7 +163,7 @@ class WidgetTrigger extends WidgetBase
         u.addEventListener("end", function() {
             setTimeout(function() {
                 triggerItemElement.remove();
-            }, 1000);
+            }, 5000);
         });
     }
 
@@ -155,7 +171,7 @@ class WidgetTrigger extends WidgetBase
      * Import XML trigger from ACT.
      * @param {string} xml 
      */
-    importXml(xml)
+    _importXml(xml)
     {
         var xmlDoc;
         var parser = new DOMParser();
@@ -196,7 +212,11 @@ class WidgetTrigger extends WidgetBase
         }
     }
 
-    triggerButtonPress(name)
+    /**
+     * Callback for button pressess
+     * @param {string} name Button name
+     */
+    _triggerButtonPress(name)
     { 
         switch (name)
         {
@@ -222,6 +242,22 @@ class WidgetTrigger extends WidgetBase
                 break;
             }
         }
+    }
+
+    /**
+     * Display current details about triggers.
+     */
+    _updateTriggerDetails()
+    {
+        var triggerMessage = "";
+        triggerMessage += this.userConfig["triggers"].length;
+        triggerMessage += " trigger(s) available. ";
+        triggerMessage += this.logLineCount;
+        triggerMessage += " log line(s) scanned.";
+        this.getBodyElement().getElementsByClassName("triggerDetails")[0].innerText = triggerMessage;
+        // run this every 5 seconds
+        var t = this;
+        setTimeout(function() { t._updateTriggerDetails(); }, 5000);
     }
 
 }

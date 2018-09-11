@@ -122,6 +122,7 @@ class WidgetParse extends WidgetBase
         this.combatants = [];
         this.encounterStartTime = null;
         this.encounterEndTime = null;
+        this._displayCombatants();
     }
 
     /**
@@ -310,7 +311,7 @@ class WidgetParse extends WidgetBase
     /**
      * Update main combatant container.
      */
-    displayCombatants()
+    _displayCombatants()
     {
         var combatantContainerElement = this.getBodyElement().getElementsByClassName("parseCombatants")[0];
         var duration = this.getDuration();
@@ -362,6 +363,12 @@ class WidgetParse extends WidgetBase
         for (var i = 0; i < this.combatants.length; i++) {
             combatantContainerElement.appendChild(this.combatants[i][1]);
         }
+        /*if (this.combatants.length == 0) {
+            var noCombatantElement = document.createElement("div");
+            noCombatantElement.classList.add("parseNoCombatants");
+            noCombatantElement.innerText = "No combatants";
+            combatantContainerElement.appendChild(noCombatantElement);
+        }*/
         this._updateColumnVisiblity();
     }
 
@@ -401,7 +408,7 @@ class WidgetParse extends WidgetBase
             )
         }
         // display combatants
-        this.displayCombatants();
+        this._displayCombatants();
     }
 
     updateCombatants(event)
@@ -420,7 +427,7 @@ class WidgetParse extends WidgetBase
                     this.combatants[i][1],
                     this.getDuration()
                 );
-                this.displayCombatants();
+                this._displayCombatants();
                 return;
             }
         }
@@ -437,7 +444,7 @@ class WidgetParse extends WidgetBase
             this.getDuration()
         );
         // display
-        this.displayCombatants();
+        this._displayCombatants();
     }
 
     showOptionConfig()
@@ -478,7 +485,7 @@ class WidgetParse extends WidgetBase
             function(name, value) {
                 t.userConfig["sortBy"] = value;
                 t._saveUserConfig();
-                t.displayCombatants();
+                t._displayCombatants();
             }
         );
     }

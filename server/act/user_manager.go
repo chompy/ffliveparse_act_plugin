@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 	"net"
+	"net/url"
 
 	"github.com/olebedev/emitter"
 
@@ -14,13 +15,15 @@ import (
 type UserManager struct {
 	userDataList []UserData
 	events       *emitter.Emitter
+	devMode      bool
 }
 
 // NewUserManager - Create new user manager
-func NewUserManager(events *emitter.Emitter) UserManager {
+func NewUserManager(events *emitter.Emitter, devMode bool) UserManager {
 	return UserManager{
 		userDataList: make([]UserData, 0),
 		events:       events,
+		devMode:      devMode,
 	}
 }
 
@@ -160,27 +163,31 @@ func (um *UserManager) ParseDataString(data []byte, addr *net.UDPAddr) (*UserDat
 			if userData == nil {
 				return nil, errors.New("recieved LogLing with no matching UserData")
 			}
-			// parse log line data
-			/*logLine, err := DecodeLogLineBytes(data)
-			if err != nil {
-				return nil, err
-			}*/
 			// forward data to web
 			go um.events.Emit("act:logLine", data)
-			// log
-			/*encounterString := "(none)"
-			if logLine.EncounterID > 0 {
-				encounterString = base36.Encode(uint64(uint32(logLine.EncounterID)))
+			// log LogLines in dev mode
+			if um.devMode {
+				// parse log line data
+				logLine, err := DecodeLogLineBytes(data)
+				if err != nil {
+					return nil, err
+				}
+				// log
+				encounterString := "(none)"
+				if logLine.EncounterID > 0 {
+					encounterString = base36.Encode(uint64(uint32(logLine.EncounterID)))
+				}
+				log.Println(
+					"Log line for session",
+					userData.Session.ID,
+					"and encounter",
+					encounterString,
+					",",
+					len(logLine.LogLine),
+					"bytes,",
+					url.QueryEscape(logLine.LogLine),
+				)
 			}
-			log.Println(
-				"Log line for session",
-				userData.Session.ID,
-				"and encounter",
-				encounterString,
-				",",
-				len(logLine.LogLine),
-				"bytes",
-			)*/
 		}
 	default:
 		{

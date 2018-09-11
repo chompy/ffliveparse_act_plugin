@@ -6,6 +6,9 @@ RUN cd /app && \
     go get github.com/olebedev/emitter && \
     go get github.com/martinlindhe/base36 && \
     go get golang.org/x/net/websocket && \
+    go get github.com/tdewolff/minify && \
+    go get github.com/tdewolff/minify/css && \
+    go get github.com/tdewolff/minify/js && \
     go build && \
     apk del git
 CMD ["./app"]

@@ -1,0 +1,17 @@
+{{template "header" .}}
+<div id="errorOverlay" class="hide">
+    <div id="errorOverlayMessage" class="textCenter textBold">An error has occured.</div>
+</div>
+<div id="modalOverlay" class="hide">
+    <div id="modalClose"></div>
+    <div id="modalBody"></div>
+</div>
+<div id="mainBody">
+    <div id="loadingMessage">Loading...</div>
+    <div id="widgetArea"></div>
+</div>
+<script type="text/javascript">
+    var SESSION_ID = "{{.UserData.Session.ID}}";
+</script>
+<script type="text/javascript" src="/app.min.js?v={{.VersionString}}"></script>
+{{template "footer"}}

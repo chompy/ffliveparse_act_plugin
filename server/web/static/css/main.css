@@ -6,6 +6,10 @@ html, body {
     margin: 0;
 }
 
+.clear {
+    clear: both;
+}
+
 .hide {
     display: none !important;
 }
@@ -21,6 +25,14 @@ img.loading {
     background-color: #414141;
     border-bottom: 1px solid #696969;
     padding: 10px 10px;
+}
+
+#siteHeader .leftSide {
+    float: left;
+}
+
+#siteHeader .rightSide {
+    float: right;
 }
 
 #errorOverlay {

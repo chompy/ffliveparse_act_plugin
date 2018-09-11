@@ -1,11 +1,13 @@
+.widget-trigger .triggerDetails {
+    font-size: 14px;
+    font-style: italic;
+}
+
 .widget-trigger .triggerItem {
-    width: 45%;
-    display: inline-block;
     height: 38px;
     overflow: hidden;
     background-color: #b5b5b5;
     border: 1px solid #696969;
-    margin-right: 2%;
     margin-top: 5px;
     position: relative;
 }
