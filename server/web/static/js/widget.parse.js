@@ -320,8 +320,8 @@ class WidgetParse extends WidgetBase
             {
                 case "healing":
                 {
-                    var aHps = (a[0].DamageHealed / this.encounterDuration);
-                    var bHps = (b[0].DamageHealed / this.encounterDuration);
+                    var aHps = (a[0].DamageHealed / t.encounterDuration);
+                    var bHps = (b[0].DamageHealed / t.encounterDuration);
                     return bHps - aHps;
                 }
                 case "deaths":
@@ -352,8 +352,8 @@ class WidgetParse extends WidgetBase
                 default:
                 case "damage":
                 {
-                    var aDps = (a[0].Damage / this.encounterDuration);
-                    var bDps = (b[0].Damage / this.encounterDuration);
+                    var aDps = (a[0].Damage / t.encounterDuration);
+                    var bDps = (b[0].Damage / t.encounterDuration);
                     return bDps - aDps;
                 }
             }

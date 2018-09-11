@@ -68,7 +68,7 @@ class WidgetCactbotRaidboss extends WidgetBase
      */
     reset()
     {
-
+        this.activeTimeline = null;
     }
 
     /**
@@ -194,6 +194,7 @@ class WidgetCactbotRaidboss extends WidgetBase
         if (!this.ready || !this.zoneName) {
             return;
         }
+        this.reset();
         // TEST
         //this.zoneName = "Sigmascape V4.0 (Savage)";
         for (var key in this.triggers) {
