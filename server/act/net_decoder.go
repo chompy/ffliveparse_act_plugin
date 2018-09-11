@@ -61,6 +61,7 @@ func DecodeEncounterBytes(data []byte) (Encounter, error) {
 		StartTime:    readTime(data, &pos),
 		EndTime:      readTime(data, &pos),
 		Zone:         readString(data, &pos),
+		Damage:       readInt32(data, &pos),
 		Active:       readByte(data, &pos) != 0,
 		SuccessLevel: readByte(data, &pos),
 	}, nil

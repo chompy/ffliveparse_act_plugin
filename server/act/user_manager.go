@@ -75,6 +75,8 @@ func (um *UserManager) ParseDataString(data []byte, addr *net.UDPAddr) (*UserDat
 				userData.Session.ID,
 				"(ZoneName:",
 				encounter.Zone,
+				", Damage: ",
+				encounter.Damage,
 				", Duration:",
 				dur,
 				", Active:",

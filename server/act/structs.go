@@ -40,6 +40,7 @@ type Encounter struct {
 	StartTime    time.Time
 	EndTime      time.Time
 	Zone         string
+	Damage       int32
 	Active       bool
 	SuccessLevel uint8
 }

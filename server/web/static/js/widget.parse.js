@@ -32,9 +32,7 @@ class WidgetParse extends WidgetBase
     {
         super();
         this.encounterId = null;
-        this.encounterStartTime = null;
-        this.encounterEndTime = null;
-        this.encounterOffset = 6000;
+        this.encounterDuration = 0;
         this.combatants = [];
         if (!("showColumns" in this.userConfig)) {
             this.userConfig["showColumns"] = [
@@ -92,7 +90,11 @@ class WidgetParse extends WidgetBase
             parseColumnsElement.appendChild(parseColumnElement);
         }
         bodyElement.appendChild(parseColumnsElement);
-
+        // no combatant message
+        var noCombatantElement = document.createElement("div");
+        noCombatantElement.classList.add("parseNoCombatants", "hide");
+        noCombatantElement.innerText = "No combatants";
+        bodyElement.appendChild(noCombatantElement);
         // add combatant container
         var combatantsElement = document.createElement("div");
         combatantsElement.classList.add("parseCombatants");
@@ -101,8 +103,8 @@ class WidgetParse extends WidgetBase
         this.reset();
         // hook events
         var t = this;
-        window.addEventListener("act:encounter", function(e) { t.updateEncounter(e); });
-        window.addEventListener("act:combatant", function(e) { t.updateCombatants(e); });
+        window.addEventListener("act:encounter", function(e) { t._updateEncounter(e); });
+        window.addEventListener("act:combatant", function(e) { t._updateCombatants(e); });
     }
 
     showOptionHelp()
@@ -120,8 +122,7 @@ class WidgetParse extends WidgetBase
     {
         this.getBodyElement().getElementsByClassName("parseCombatants")[0].innerHTML = "";
         this.combatants = [];
-        this.encounterStartTime = null;
-        this.encounterEndTime = null;
+        this.encounterDuration = 0;
         this._displayCombatants();
     }
 
@@ -207,9 +208,8 @@ class WidgetParse extends WidgetBase
      * Update combatant element.
      * @param {array} combatant 
      * @param {Element} element 
-     * @param {integer} duration 
      */
-    _updateCombatantElement(combatant, element, duration)
+    _updateCombatantElement(combatant, element)
     {
         // calculate percents
         var damageTotal = 0;
@@ -239,15 +239,15 @@ class WidgetParse extends WidgetBase
                 {
                     // dps
                     var dpsElement = colElement.getElementsByClassName("parseCombatantDps")[0];
-                    var dps = (combatant.Damage / (duration / 1000));
-                    if (isNaN(dps) || !dps || dps < 0) {
+                    var dps = (combatant.Damage / this.encounterDuration);
+                    if (!this._isValidParseNumber(dps)) {
                         dps = 0;
                     }
                     dpsElement.innerText = dps.toFixed(2);
                     // damage percent
                     var damagePercentElement = colElement.getElementsByClassName("parseCombatantDamagePercent")[0];
                     var damagePercent = Math.floor(combatant.Damage * (100 / damageTotal));
-                    if (isNaN(damagePercent) || !damagePercent || damagePercent < 0) {
+                    if (!this._isValidParseNumber(damagePercent)) {
                         damagePercent = 0;
                     }
                     damagePercentElement.innerText = damagePercent + "%";
@@ -257,15 +257,15 @@ class WidgetParse extends WidgetBase
                 {
                     // hps
                     var hpsElement = colElement.getElementsByClassName("parseCombatantHps")[0];
-                    var hps = (combatant.DamageHealed / (duration / 1000));
-                    if (isNaN(hps) || !hps || hps < 0) {
+                    var hps = (combatant.DamageHealed / this.encounterDuration);
+                    if (!this._isValidParseNumber(hps)) {
                         hps = 0;
                     }
                     hpsElement.innerText = hps.toFixed(2);
                     // healing percent
                     var healingPercentElement = colElement.getElementsByClassName("parseCombatantHealingPercent")[0];
                     var healingPercent = Math.floor(combatant.DamageHealed * (100 / healingTotal));
-                    if (isNaN(healingPercent) || !healingPercent || healingPercent < 0) {
+                    if (!this._isValidParseNumber(healingPercent)) {
                         healingPercent = 0;
                     }
                     healingPercentElement.innerText = healingPercent + "%";
@@ -314,15 +314,14 @@ class WidgetParse extends WidgetBase
     _displayCombatants()
     {
         var combatantContainerElement = this.getBodyElement().getElementsByClassName("parseCombatants")[0];
-        var duration = this.getDuration();
         var t = this;
         this.combatants.sort(function(a, b) {
             switch (t.userConfig["sortBy"])
             {
                 case "healing":
                 {
-                    var aHps = (a[0].DamageHealed / (duration / 1000));
-                    var bHps = (b[0].DamageHealed / (duration / 1000));
+                    var aHps = (a[0].DamageHealed / this.encounterDuration);
+                    var bHps = (b[0].DamageHealed / this.encounterDuration);
                     return bHps - aHps;
                 }
                 case "deaths":
@@ -353,8 +352,8 @@ class WidgetParse extends WidgetBase
                 default:
                 case "damage":
                 {
-                    var aDps = (a[0].Damage / (duration / 1000));
-                    var bDps = (b[0].Damage / (duration / 1000));
+                    var aDps = (a[0].Damage / this.encounterDuration);
+                    var bDps = (b[0].Damage / this.encounterDuration);
                     return bDps - aDps;
                 }
             }
@@ -363,55 +362,41 @@ class WidgetParse extends WidgetBase
         for (var i = 0; i < this.combatants.length; i++) {
             combatantContainerElement.appendChild(this.combatants[i][1]);
         }
-        /*if (this.combatants.length == 0) {
-            var noCombatantElement = document.createElement("div");
-            noCombatantElement.classList.add("parseNoCombatants");
-            noCombatantElement.innerText = "No combatants";
-            combatantContainerElement.appendChild(noCombatantElement);
-        }*/
+        // show/hide no combatant element
+        var noCombatantElement = this.getBodyElement().getElementsByClassName("parseNoCombatants")[0];
+        if (this.combatants.length == 0) {
+            noCombatantElement.classList.remove("hide");
+        } else {
+            noCombatantElement.classList.add("hide");
+        }
         this._updateColumnVisiblity();
     }
 
-    /**
-     * Get duration of encounter.
-     */
-    getDuration()
-    {
-        if (!this.encounterStartTime) {
-            return 0;
-        }
-        if (this.encounterEndTime) {
-            return this.encounterEndTime.getTime() - this.encounterStartTime.getTime();
-        }
-        return new Date().getTime() - this.encounterStartTime.getTime() + this.encounterOffset;
-    }
-
-    updateEncounter(event)
+    _updateEncounter(event)
     {
         // new encounter
         if (this.encounterId != event.detail.ID) {
             this.reset();
             this.encounterId = event.detail.ID;
         }
-        // inactive
-        if (!event.detail.Active) {
-            this.encounterEndTime = event.detail.EndTime;
+        // update encounter duration
+        this.encounterDuration = (event.detail.EndTime.getTime() - event.detail.StartTime.getTime()) / 1000
+        if (!this._isValidParseNumber(this.encounterDuration)) {
+            this.encounterDuration = 0;
         }
-        // update start time
-        this.encounterStartTime = event.detail.StartTime;
         // update combatant elements
         for (var i in this.combatants) {
             this._updateCombatantElement(
                 this.combatants[i][0],
                 this.combatants[i][1],
-                this.getDuration()
+                this.encounterDuration
             )
         }
         // display combatants
         this._displayCombatants();
     }
 
-    updateCombatants(event)
+    _updateCombatants(event)
     {
         var combatant = event.detail;
         // must be part of same encounter
@@ -425,7 +410,7 @@ class WidgetParse extends WidgetBase
                 this._updateCombatantElement(
                     combatant,
                     this.combatants[i][1],
-                    this.getDuration()
+                    this.encounterDuration
                 );
                 this._displayCombatants();
                 return;
@@ -441,7 +426,7 @@ class WidgetParse extends WidgetBase
         this._updateCombatantElement(
             combatant,
             combatantElement,
-            this.getDuration()
+            this.encounterDuration
         );
         // display
         this._displayCombatants();

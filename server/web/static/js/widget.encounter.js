@@ -10,7 +10,6 @@ class WidgetEncounter extends WidgetBase
         super()
         this.startTime = null;
         this.offset = 6000;
-        this.lastDuration = 0;
         this.combatants = [];
     }
 
@@ -47,9 +46,8 @@ class WidgetEncounter extends WidgetBase
         this.reset();
         // hook events
         var t = this;
-        window.addEventListener("act:encounter", function(e) { t.updateEncounter(e); });
-        window.addEventListener("act:combatant", function(e) { t.updateCombatants(e); });
-        this.tick();
+        window.addEventListener("act:encounter", function(e) { t._updateEncounter(e); });
+        this._tick();
     }
 
     showOptionHelp()
@@ -74,17 +72,16 @@ class WidgetEncounter extends WidgetBase
     /**
      * Tick the timer and update raid dps.
      */
-    tick()
+    _tick()
     {
         // update element
         if (this.startTime) {
             var duration = new Date().getTime() - this.startTime.getTime() + this.offset;
             this.setTimer(duration);
-            this.setRaidDps(duration);
         }
         // run every second
         var t = this;
-        setTimeout(function() { t.tick(); }, 1000)
+        setTimeout(function() { t._tick(); }, 1000)
     }
 
     /**
@@ -103,32 +100,10 @@ class WidgetEncounter extends WidgetBase
     }
 
     /**
-     * Calculate raid dps based on duration.
-     * @param {integer} duration 
-     */
-    setRaidDps(duration)
-    {
-        var totalDamage = 0;
-        if (this.combatants) {
-            for (var i = 0; i < this.combatants.length; i++) {
-                totalDamage += this.combatants[i].Damage;
-            }
-        }
-        if (isNaN(totalDamage) || !totalDamage || totalDamage < 0) {
-            totalDamage = 0;
-        }
-        var raidDps = (totalDamage / (duration / 1000));
-        if (isNaN(raidDps) || !raidDps || raidDps < 0) {
-            raidDps = 0;
-        }
-        this.getBodyElement().getElementsByClassName("encounterRaidDps")[0].innerText = raidDps.toFixed(2);
-    }
-
-    /**
      * Update encounter data from act:encounter event.
      * @param {Event} event 
      */
-    updateEncounter(event)
+    _updateEncounter(event)
     {
         // new encounter active
         if (!this.startTime && event.detail.Active) {
@@ -136,37 +111,23 @@ class WidgetEncounter extends WidgetBase
         }
         // update zone
         this.getBodyElement().getElementsByClassName("encounterZone")[0].innerText = event.detail.Zone;
+        // calculate encounter dps
+        var encounterDps = event.detail.Damage / ((event.detail.EndTime.getTime() - event.detail.StartTime.getTime()) / 1000);
+        if (!this._isValidParseNumber(encounterDps)) {
+            encounterDps = 0;
+        }
+        this.getBodyElement().getElementsByClassName("encounterRaidDps")[0].innerText = encounterDps.toFixed(2);
         // inactive
         if (!event.detail.Active) {
             this.startTime = null;
             this.getBodyElement().classList.remove("active");
-            this.lastDuration = event.detail.EndTime.getTime() - event.detail.StartTime.getTime();
-            this.setTimer(this.lastDuration);
-            this.setRaidDps(this.lastDuration);
+            var lastDuration = event.detail.EndTime.getTime() - event.detail.StartTime.getTime();
+            this.setTimer(lastDuration);
             return;
         }
         this.startTime = event.detail.StartTime;
-        //this.offset = event.detail.EndTime.getTime() - new Date().getTime();
+        // make active encounter
         this.getBodyElement().classList.add("active");  
-    }
-
-    /**
-     * Update combatant data from act:combatant event.
-     * @param {Event} event 
-     */
-    updateCombatants(event)
-    {
-        var combatant = event.detail;
-        for (var i = 0; i < this.combatants.length; i++) {
-            if (this.combatants[i].Name == combatant.Name) {
-                this.combatants[i] = combatant;
-                return;
-            }
-        }
-        this.combatants.push(combatant);
-        if (!this.startTime && this.lastDuration > 0)  {
-            this.setRaidDps(this.lastDuration);
-        }
     }
 
 }

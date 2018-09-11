@@ -43,6 +43,7 @@ func EncodeEncounterBytes(value *Encounter) []byte {
 	writeTime(&data, value.StartTime)
 	writeTime(&data, value.EndTime)
 	writeString(&data, value.Zone)
+	writeInt32(&data, value.Damage)
 	writeBool(&data, value.Active)
 	writeByte(&data, value.SuccessLevel)
 	return data

@@ -190,4 +190,18 @@ class WidgetBase
         );
     }
 
+    /**
+     * Check that number is valid number for parsing.
+     * I.e. a real number that is a non negative
+     * @param {numeric} value 
+     */
+    _isValidParseNumber(value)
+    {
+        return (
+            !isNaN(value) &&
+            isFinite(value) &&
+            value >= 0
+        );
+    }
+
 }

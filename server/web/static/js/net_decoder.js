@@ -43,6 +43,7 @@ function decodeEncounterBytes(data)
     output["StartTime"]     = readString(data, pos); pos += 1+output["StartTime"].length;
     output["EndTime"]       = readString(data, pos); pos += 1+output["EndTime"].length;
     output["Zone"]          = readString(data, pos); pos += 1 + output["Zone"].length;
+    output["Damage"]        = readUint32(data, pos); pos += SIZE_INT32;
     output["Active"]        = readByte(data, pos) != 0; pos += SIZE_BYTE;
     output["SuccessLevel"]  = readByte(data, pos); pos += SIZE_BYTE;
     

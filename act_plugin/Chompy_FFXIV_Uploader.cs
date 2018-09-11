@@ -23,7 +23,6 @@ namespace ACT_Plugin
         const int UID_SIZE = 5;
 
         const Int32 VERSION_NUMBER = 1;                 // Version number, much match version number in parse server
-        const int MAX_ENCOUNTER_SEND_COUNT = 5;         // Max number of times to send encounter data during single encounter
 
         const byte DATA_TYPE_SESSION = 1;               // Data type, session data
         const byte DATA_TYPE_ENCOUNTER = 2;             // Data type, encounter data
@@ -180,10 +179,6 @@ namespace ACT_Plugin
 
         void sendEncounterData(EncounterData ed)
         {
-            // max encounter send count
-            if (encounterSendCount > MAX_ENCOUNTER_SEND_COUNT) {
-                return;
-            }
             encounterSendCount++;
             // build send data
             List<Byte> sendData = new List<Byte>();
@@ -192,6 +187,7 @@ namespace ACT_Plugin
             prepareDateTime(ref sendData, ed.StartTime);                   // start time of encounter
             prepareDateTime(ref sendData, ed.EndTime);                     // end time of encounter
             prepareString(ref sendData, ed.ZoneName);                      // zone name
+            prepareInt32(ref sendData, (Int32) ed.Damage);                 // encounter damage
             sendData.Add((byte) (ed.Active ? 1 : 0));                      // is still active encounter
             sendData.Add((byte) ed.GetEncounterSuccessLevel());            // success level of encounter
             // send
