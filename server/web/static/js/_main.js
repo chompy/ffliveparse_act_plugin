@@ -16,19 +16,24 @@ window.addEventListener("load", function(e) {
         var fileReader = new FileReader();
         fileReader.onload = function(event) {
             var byteArray = new Uint8Array(event.target.result);
-            var data = parseMessage(byteArray);
-            if (data.Type != DATA_TYPE_LOG_LINE) {
-                console.log(">> Recieved message,", data);
+            try {
+                var data = parseMessage(byteArray);
+            } catch (e) {
+                console.log(">> Error parsing message,", byteArray);
+                throw e;
             }
+            /*if (data.Type != DATA_TYPE_LOG_LINE) {
+                console.log(">> Recieved message,", data);
+            }*/
         };
         fileReader.readAsArrayBuffer(event.data);
     };
     socket.onclose = function(event) {
         document.getElementById("errorOverlay").classList.remove("hide");
-        console.log(">> Connection closed.");
+        console.log(">> Connection closed,", event);
     };
     socket.onerror = function(event) {
         document.getElementById("errorOverlay").classList.remove("hide");
-        console.log(">> An error has occured.");
+        console.log(">> An error has occured,", event);
     };
 });

@@ -3,7 +3,43 @@ var LOAD_SCRIPTS = [
     "/static/lib/cactbot/ui/raidboss/timeline.js",
     "/static/lib/cactbot/resources/regexes.js",
     "/static/lib/cactbot/resources/fights.js"
-]
+];
+var CACTBOT_LOCALE_NAME = "en";
+var JOB_LIST = [
+    "WHM",
+    "SCH",
+    "AST",
+    "PLD",
+    "DRK",
+    "WAR",
+    "MNK",
+    "DRG",
+    "SAM",
+    "NIN",
+    "RDM",
+    "BLM",
+    "SMN",
+    "BRD",
+    "MCH"
+];
+var JOB_ROLE_LIST = {
+    "dps-melee"     : [
+        "MNK", "SAM", "NIN", "DRG"
+    ],
+    "dps-caster"    : [
+        "BLM", "SMN", "RDM"
+    ],
+    "dps-ranged"    : [
+        "BRD", "MCH"
+    ],
+    "tank"          : [
+        "PLD", "DRK", "WAR"
+    ],
+    "healer"        : [
+        "AST", "SCH", "WHM"
+    ]
+};
+
 
 /**
  * Cactbot raidboss widget
@@ -22,7 +58,19 @@ class WidgetCactbotRaidboss extends WidgetBase
         this.endRegexs = [];
         this.ready = false;
         this.activeTimeline = null;
+        this.activeTriggers = null;
         this.tickTimeout = null;
+        this.alertTimeout = null;
+        this.myData = null;
+        if (!("tts" in this.userConfig)) {
+            this.userConfig["tts"] = true;
+            this._saveUserConfig()
+        }
+        JOB_LIST.sort();
+        if (!("job" in this.userConfig)) {
+            this.userConfig["job"] = JOB_LIST[0];
+            this._saveUserConfig();
+        }
     }
 
     getName()
@@ -33,6 +81,20 @@ class WidgetCactbotRaidboss extends WidgetBase
     getTitle()
     {
         return "Cactbot (raidboss)";
+    }
+
+    getOptions()
+    {
+        var options = super.getOptions();
+        var t = this;
+        options.push(
+            new WidgetOption(
+                "Configuration",
+                "/static/img/opt_config.png",
+                function() { t._showOptionConfig(); }
+            )
+        )
+        return options;
     }
 
     add()
@@ -48,6 +110,10 @@ class WidgetCactbotRaidboss extends WidgetBase
             scriptElement.src = LOAD_SCRIPTS[i];
             bodyElement.appendChild(scriptElement);
         }
+        // add alert area
+        var alertElement = document.createElement("div");
+        alertElement.classList.add("cactbotAlert", "textCenter", "textBold");
+        bodyElement.appendChild(alertElement);
         // add timer container
         var timerContainerElement = document.createElement("div");
         timerContainerElement.classList.add("cactbotTimerContainer");
@@ -80,8 +146,40 @@ class WidgetCactbotRaidboss extends WidgetBase
             this.activeTimeline.Stop();
             delete this.activeTimeline;
             this.activeTimeline = null;
+            this.activeTriggers = null;
+            this.myData = null;
         }
         this.getBodyElement().getElementsByClassName("cactbotTimerContainer")[0].innerHTML = "";
+    }
+
+    /**
+     * Show configuration options.
+     */
+    _showOptionConfig()
+    {
+        Modal.reset();
+        Modal.open();
+        var t = this;
+        Modal.addSection("General");
+        Modal.addCheckbox(
+            "tts",
+            "Enable TTS Alerts",
+            this.userConfig["tts"],
+            function(name, checked) {
+                t.userConfig["tts"] = checked;
+                t._saveUserConfig();
+            }
+        )
+        Modal.addSection("My Job");
+        Modal.addChoices(
+            "job",
+            JOB_LIST,
+            JOB_LIST.indexOf(this.userConfig["job"]),
+            function(name, value) {
+                t.userConfig["job"] = JOB_LIST[value];
+                t._saveUserConfig();
+            }
+        );
     }
 
     /**
@@ -200,22 +298,43 @@ class WidgetCactbotRaidboss extends WidgetBase
         if (!this.ready || !this.activeTimeline) {
             return;
         }
-        this.activeTimeline.OnLogLine(event.detail.LogLine);
-        if (this.activeTimeline) {
-            if (this.startRegexs && this.activeTimeline.timebase <= 0) {
-                for (var i in this.startRegexs) {
-                    if (event.detail.LogLine.match(this.startRegexs[i])) {
-                        this.activeTimeline.SyncTo(1);
-                        break;
-                    }
+        // check for 'start' event
+        if (this.startRegexs && this.activeTimeline.timebase <= 0) {
+            for (var i in this.startRegexs) {
+                if (event.detail.LogLine.match(this.startRegexs[i])) {
+                    this.activeTimeline.SyncTo(1);
+                    break;
                 }
             }
-            if (this.endRegexs && this.activeTimeline.timebase > 0) {
-                for (var i in this.endRegexs) {
-                    if (event.detail.LogLine.match(this.endRegexs[i])) {
-                        this.reset();
-                        break;
+        }
+        // check for 'end' event
+        if (this.endRegexs && this.activeTimeline.timebase > 0) {
+            for (var i in this.endRegexs) {
+                if (event.detail.LogLine.match(this.endRegexs[i])) {
+                    this.reset();
+                    return;
+                }
+            }
+        }
+        // push log line to active timeline
+        this.activeTimeline.OnLogLine(event.detail.LogLine);
+        // process triggers
+        if (this.activeTriggers) {
+            for (var i in this.activeTriggers.triggers) {
+                var trigger = this.activeTriggers.triggers[i];
+                var matches = event.detail.LogLine.match(trigger.regex);
+                if (matches) {
+                    if ("delaySeconds" in trigger) {
+                        var t = this;
+                        setTimeout(
+                            function(trigger) { t._displayAlert(trigger, matches); },
+                            trigger.delaySeconds * 1000,
+                            trigger,
+                            matches
+                        );
+                        return;
                     }
+                    this._displayAlert(trigger, matches);
                 }
             }
         }
@@ -258,6 +377,7 @@ class WidgetCactbotRaidboss extends WidgetBase
                         "MaxNumberOfTimerBars" : 5
                     }
                 );
+                this.activeTriggers = this.triggers[key];
                 this.activeTimeline.SetAddTimer(function(currentTime, eventData, active) {
                     console.log(">> Cactbot (raidboss), new timer, ", currentTime, eventData, active);
                     t._setTimer(currentTime, eventData, active);
@@ -267,7 +387,14 @@ class WidgetCactbotRaidboss extends WidgetBase
                     t._removeTimer(eventData, expired);
                 });
                 // TEST
-                //this.activeTimeline.OnLogLine(" 15:........:Kefka:28EC:");
+                /*
+                this.activeTimeline.OnLogLine(" 15:........:Kefka:28EC:");
+                setTimeout(
+                    function() {
+                        t._onLogLine({"detail" : {"LogLine" : "Kefka starts using Future's End"}});
+                    },
+                    1000
+                )*/
                 break;
             }
         }
@@ -379,6 +506,94 @@ class WidgetCactbotRaidboss extends WidgetBase
         this.tickTimeout = setTimeout(function() {
             t._tickTimers();
         }, 1000);
+    }
+
+    /**
+     * Display trigger alert and tts.
+     * @param {object} trigger
+     * @param {array} matches
+     */
+    _displayAlert(trigger, matches)
+    {
+        var alertElement = this.getBodyElement().getElementsByClassName("cactbotAlert")[0];
+        // construct data object
+        if (!this.myData) {
+            var myRole = null;
+            for (var role in JOB_ROLE_LIST) {
+                if (JOB_ROLE_LIST[role].indexOf(this.userConfig["job"]) != -1) {
+                    myRole = role;
+                    break;
+                }
+            }
+            this.myData = {
+                "me"        : null,
+                "job"       : this.userConfig["job"],
+                "role"      : myRole,
+                "lang"      : CACTBOT_LOCALE_NAME,
+                "currentHP" : 1,
+                "ShortName" : function(name) { return name; },
+                ParseLocaleFloat: parseFloat,
+            };
+        }
+        // check condition
+        if ("condition" in trigger) {
+            if (!trigger.condition(this.myData, matches)) {
+                return;
+            }
+        }
+        // pre run
+        if ("preRun" in trigger) {
+            trigger.preRun(this.myData, matches);
+        }
+
+        // display alert
+        var alertTextTypes = ["infoText", "alertText", "alarmText"];
+        for (var i in alertTextTypes) {
+            if (alertTextTypes[i] in trigger) {
+                var alertText = trigger[alertTextTypes[i]];
+                if (typeof(alertText) == "function") {
+                    alertText = alertText(this.myData, matches);
+                }
+                if (!alertText) {
+                    continue;
+                }
+                if (typeof(alertText) == "object") {
+                    if (!(CACTBOT_LOCALE_NAME in alertText)) {
+                        continue;
+                    }
+                    alertText = alertText[CACTBOT_LOCALE_NAME];
+                }
+                alertElement.innerText = trigger.alertText[CACTBOT_LOCALE_NAME];
+                var t = this;
+                if (this.alertTimeout) {
+                    clearTimeout(this.alertTimeout)
+                }
+                this.alertTimeout = setTimeout(
+                    function() {
+                        t.getBodyElement().getElementsByClassName("cactbotAlert")[0].innerText = "";
+                    },
+                    5000
+                );
+            }
+        }
+        // tts
+        if (this.userConfig["tts"] && "tts" in trigger) {
+            var tts = trigger.tts;
+            if (typeof(tts) == "function") {
+                tts = tts(this.myData);
+            }
+            if (typeof(tts) == "object") {
+                tts = tts[CACTBOT_LOCALE_NAME];
+            }
+            if (tts) {
+                var u = new SpeechSynthesisUtterance(tts);
+                speechSynthesis.speak(u);
+            }
+        }
+        // post run
+        if ("run" in trigger) {
+            trigger.run(this.myData, trigger);
+        }
     }
 
 }
