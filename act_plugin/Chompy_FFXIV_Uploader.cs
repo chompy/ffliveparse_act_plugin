@@ -118,9 +118,18 @@ namespace ACT_Plugin
             prepareString(ref sendData, dateTimeString);
         }
 
+        void prepareUint16(ref List<Byte> sendData, UInt16 value)
+        {
+            Byte[] valueBytes = BitConverter.GetBytes((UInt16)value);
+            if (BitConverter.IsLittleEndian) {
+                 Array.Reverse(valueBytes);
+            }
+            sendData.AddRange(valueBytes);   
+        }
+
         void prepareInt32(ref List<Byte> sendData, Int32 value)
         {
-            Byte[] valueBytes = BitConverter.GetBytes(value);
+            Byte[] valueBytes = BitConverter.GetBytes((Int32)value);
             if (BitConverter.IsLittleEndian) {
                  Array.Reverse(valueBytes);
             }
@@ -129,13 +138,8 @@ namespace ACT_Plugin
 
         void prepareString(ref List<Byte> sendData, string value)
         {
-            Byte[] valueBytes = Encoding.UTF8.GetBytes(
-                value.Substring(
-                    0, 
-                    value.Length > 255 ? 255 : value.Length
-                )
-            );
-            sendData.Add((byte) valueBytes.Length);
+            Byte[] valueBytes = Encoding.UTF8.GetBytes(value);
+            prepareUint16(ref sendData, (UInt16) valueBytes.Length);
             sendData.AddRange(valueBytes);
         }
 
@@ -231,9 +235,7 @@ namespace ACT_Plugin
             // time
             prepareDateTime(ref sendData, logInfo.detectedTime);
             // line
-            Byte[] logLineBytes = Encoding.UTF8.GetBytes(logInfo.logLine);
-            prepareInt32(ref sendData, logLineBytes.Length);
-            sendData.AddRange(logLineBytes);
+            prepareString(ref sendData, logInfo.logLine);
             // send
             sendUdp(ref sendData);
         }

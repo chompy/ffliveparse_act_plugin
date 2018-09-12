@@ -7,6 +7,12 @@ import (
 	"time"
 )
 
+func readUint16(data []byte, pos *int) uint16 {
+	dataString := data[*pos : *pos+2]
+	*pos += 2
+	return binary.BigEndian.Uint16(dataString)
+}
+
 func readInt32(data []byte, pos *int) int32 {
 	dataString := data[*pos : *pos+4]
 	*pos += 4
@@ -20,9 +26,9 @@ func readByte(data []byte, pos *int) byte {
 }
 
 func readString(data []byte, pos *int) string {
-	length := int(uint8(data[*pos]))
-	output := string(data[*pos+1 : *pos+1+length])
-	*pos += 1 + length
+	length := int(readUint16(data, pos))
+	output := string(data[*pos : *pos+length])
+	*pos += length
 	return output
 }
 
@@ -115,8 +121,7 @@ func DecodeLogLineBytes(data []byte) (LogLing, error) {
 	pos := 1
 	encounterID := readInt32(data, &pos)
 	time := readTime(data, &pos)
-	logLineLength := readInt32(data, &pos)
-	logLine := string(data[pos : pos+int(logLineLength)])
+	logLine := readString(data, &pos)
 	return LogLing{
 		EncounterID: encounterID,
 		Time:        time,

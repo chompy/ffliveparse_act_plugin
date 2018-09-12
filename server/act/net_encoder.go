@@ -5,6 +5,12 @@ import (
 	"time"
 )
 
+func writeUint16(data *[]byte, value uint16) {
+	buf := make([]byte, 2)
+	binary.BigEndian.PutUint16(buf, value)
+	*data = append(*data, buf...)
+}
+
 func writeInt32(data *[]byte, value int32) {
 	buf := make([]byte, 4)
 	binary.BigEndian.PutUint32(buf, uint32(value))
