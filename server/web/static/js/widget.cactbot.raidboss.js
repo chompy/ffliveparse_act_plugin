@@ -19,6 +19,7 @@ class WidgetCactbotRaidboss extends WidgetBase
         this.zoneName = "";
         this.ready = false;
         this.activeTimeline = null;
+        this.tickTimeout = null;
     }
 
     getName()
@@ -44,6 +45,10 @@ class WidgetCactbotRaidboss extends WidgetBase
             scriptElement.src = LOAD_SCRIPTS[i];
             bodyElement.appendChild(scriptElement);
         }
+        // add timer container
+        var timerContainerElement = document.createElement("div");
+        timerContainerElement.classList.add("cactbotTimerContainer");
+        bodyElement.appendChild(timerContainerElement);
         // reset
         this.reset();
         // fetch data
@@ -69,6 +74,7 @@ class WidgetCactbotRaidboss extends WidgetBase
     reset()
     {
         this.activeTimeline = null;
+        this.getBodyElement().getElementsByClassName("cactbotTimerContainer")[0].innerHTML = "";
     }
 
     /**
@@ -168,7 +174,11 @@ class WidgetCactbotRaidboss extends WidgetBase
      */
     _onEncounter(event)
     {
+        if (!event.detail.Active) {
+            this.reset();
+        }
         if (event.detail.Zone != this.zoneName) {
+            this.reset();
             this.zoneName = event.detail.Zone;
             this._loadTimelineForZone();
         }
@@ -197,6 +207,7 @@ class WidgetCactbotRaidboss extends WidgetBase
         this.reset();
         // TEST
         //this.zoneName = "Sigmascape V4.0 (Savage)";
+        var t = this;
         for (var key in this.triggers) {
             if (!("timelineFile" in this.triggers[key])) {
                 continue;
@@ -215,9 +226,11 @@ class WidgetCactbotRaidboss extends WidgetBase
                 );
                 this.activeTimeline.SetAddTimer(function(currentTime, eventData, active) {
                     console.log(">> Cactbot (raidboss), new timer, ", currentTime, eventData, active);
+                    t._setTimer(currentTime, eventData, active);
                 });
                 this.activeTimeline.SetRemoveTimer(function(eventData, expired) {
                     console.log(">> Cactbot (raidboss), remove timer, ", eventData, expired);
+                    t._removeTimer(eventData, expired);
                 });
 
                 // TEST
@@ -225,6 +238,111 @@ class WidgetCactbotRaidboss extends WidgetBase
                 break;
             }
         }
+    }
+
+    /**
+     * Add/update timer.
+     * @param {integer} currentTime 
+     * @param {dict} eventData 
+     * @param {boolean} active 
+     */
+    _setTimer(currentTime, eventData, active)
+    {
+        // update existing
+        var timerElement = this.getBodyElement().getElementsByClassName("cactbotTimer-" + eventData.id)[0];
+        if (timerElement) {
+            timerElement.classList.remove("active");
+            if (active) {
+                timerElement.classList.add("active");
+            }
+            return;
+        }
+        // main timer element
+        var timerElement = document.createElement("div");
+        timerElement.classList.add(
+            "cactbotTimer",
+            "cactbotTimer-" + eventData.id
+        );
+        timerElement.setAttribute("data-time", eventData.time);
+        timerElement.setAttribute("data-name", eventData.name);
+        timerElement.setAttribute("data-sort", eventData.sortKey);
+        if (active) {
+            timerElement.classList.add("active");
+        }
+        // time text element
+        var timeTextElement = document.createElement("div");
+        timeTextElement.classList.add("cactbotTimerText");
+        timeTextElement.innerText = "--"
+        timerElement.appendChild(timeTextElement);
+        // add event name element
+        var eventNameElement = document.createElement("div");
+        eventNameElement.classList.add("cactbotTimerEventName");
+        eventNameElement.innerText = eventData.text;
+        timerElement.appendChild(eventNameElement);
+        // add
+        this.getBodyElement().getElementsByClassName("cactbotTimerContainer")[0].appendChild(timerElement);
+        this._sortTimers()
+        this._tickTimers();
+    }
+
+    /**
+     * Delete timer.
+     * @param {dict} eventData 
+     * @param {boolean} expired 
+     */
+    _removeTimer(eventData, expired)
+    {
+        var timerElement = this.getBodyElement().getElementsByClassName("cactbotTimer-" + eventData.id)[0];
+        if (!timerElement) {
+            return;
+        }
+        timerElement.remove();
+        this._sortTimers();
+    }
+
+    /**
+     * Sort all timers by their sort key.
+     */
+    _sortTimers()
+    {
+        if (!this.activeTimeline) {
+            return;
+        }
+        var timerContainer = this.getBodyElement().getElementsByClassName("cactbotTimerContainer")[0];
+        var timerElementNodes = timerContainer.getElementsByClassName("cactbotTimer");
+        var timerElementsList = [];
+        for (var i = 0; i < timerElementNodes.length; i++) {
+            timerElementsList.push(timerElementNodes[i]);
+        }
+        timerElementsList.sort(function(a, b) {
+            return a.getAttribute("data-sort") > b.getAttribute("data-sort");
+        });
+        for (var i in timerElementsList) {
+            timerContainer.appendChild(timerElementsList[i]);
+        }
+    }
+
+    _tickTimers()
+    {
+        if (this.tickTimeout) {
+            clearTimeout(this.tickTimeout);
+        }
+        if (!this.activeTimeline) {
+            return;
+        }
+        var fightNow = (new Date() - this.activeTimeline.timebase) / 1000;
+        var timerContainer = this.getBodyElement().getElementsByClassName("cactbotTimerContainer")[0];
+        var timerElementNodes = timerContainer.getElementsByClassName("cactbotTimer");
+        for (var i = 0; i < timerElementNodes.length; i++) {
+            var timerTextElement = timerElementNodes[i].getElementsByClassName("cactbotTimerText")[0];
+            var time = Math.floor(timerElementNodes[i].getAttribute("data-time") - fightNow);
+            timerTextElement.innerText = (time < 10 ? "0" : "") + time;
+        }
+        // call again
+        var t = this;
+        this.tickTimeout = setTimeout(function() {
+            t._tickTimers();
+        }, 1000);
     }
 
 }

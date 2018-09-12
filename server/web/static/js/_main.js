@@ -9,7 +9,7 @@ window.addEventListener("load", function(e) {
         // add widgets
         new WidgetEncounter().add();
         new WidgetParse().add();
-        new WidgetTrigger().add();
+        //new WidgetTrigger().add();
         new WidgetCactbotRaidboss().add();
     };
     socket.onmessage = function(event) {

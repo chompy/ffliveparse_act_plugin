@@ -1,0 +1,26 @@
+.widget-cactbot-raidboss .cactbotTimerContainer .cactbotTimer {
+    margin-top: 4px;
+    margin-bottom: 3px;
+    padding: 3px 5px;
+}
+
+.widget-cactbot-raidboss .cactbotTimerContainer .cactbotTimer:nth-child(odd) {
+    background-color: #b5b5b5;
+    color: #000;
+}
+
+.widget-cactbot-raidboss .cactbotTimerContainer .cactbotTimer .cactbotTimerText {
+    display: inline-block;
+    font-size: 24px;
+    color: red;
+    margin-right: 10px;
+    vertical-align: middle;
+    font-family: "courier new";
+    letter-spacing: -1px;
+    font-weight: bold;
+}
+
+.widget-cactbot-raidboss .cactbotTimerContainer .cactbotTimer .cactbotTimerEventName {
+    display: inline-block;
+    vertical-align: middle;
+}
