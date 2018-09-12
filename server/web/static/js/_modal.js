@@ -170,6 +170,36 @@ class Modal
         Modal.getModalBodyElement().appendChild(choicesContainerElement);
     }
 
+    static addText(name, label, value, callback)
+    {
+        var textContainerElement = document.createElement("div");
+        textContainerElement.classList.add(
+            "modalText",
+            "modalText-" + name
+        );
+
+        var textLabelElement = document.createElement("label");
+        textLabelElement.appendChild(
+            document.createTextNode(label)
+        );
+        var textElement = document.createElement("input");
+        textElement.type = "text";
+        textElement.name = name;
+        if (value) {
+            textElement.value = value;
+        }
+        textLabelElement.appendChild(textElement);
+        textContainerElement.appendChild(textLabelElement);
+        Modal.getModalBodyElement().appendChild(textContainerElement);
+        if (callback) {
+            var name = name;
+            var callback = callback;
+            textElement.addEventListener("change", function(e) {
+                callback(name, e.target.value);
+            });
+        }
+    }
+
     static addTextArea(name, value, callback)
     {
         var textareaContainerElement = document.createElement("div");
@@ -184,6 +214,13 @@ class Modal
         }
         textareaContainerElement.appendChild(textAreaElement);
         Modal.getModalBodyElement().appendChild(textareaContainerElement);
+        if (callback) {
+            var name = name;
+            var callback = callback;
+            textAreaElement.addEventListener("change", function(e) {
+                callback(name, e.target.innerText);
+            });
+        }
     }
 
     static addButtons(buttons, callback)

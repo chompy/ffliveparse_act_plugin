@@ -46,11 +46,20 @@
     font-weight: bold;
 }
 
+#modalBody .modalText {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    font-size: 15px;    
+}
+
+#modalBody .modalText input {
+    margin-left: 5px;
+}
+
 #modalBody .modalCheckbox, #modalBody .modalChoices .modalChoicesChoice {
-    margin-top: 3px;
+    margin-top: 5px;
+    margin-bottom: 5px;
     font-size: 15px;
-    display: inline-block;
-    width: 45%;
 }
 
 #modalBody .modalCheckbox input, #modalBody .modalChoices input {

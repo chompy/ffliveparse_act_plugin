@@ -5,23 +5,6 @@ var LOAD_SCRIPTS = [
     "/static/lib/cactbot/resources/fights.js"
 ];
 var CACTBOT_LOCALE_NAME = "en";
-var JOB_LIST = [
-    "WHM",
-    "SCH",
-    "AST",
-    "PLD",
-    "DRK",
-    "WAR",
-    "MNK",
-    "DRG",
-    "SAM",
-    "NIN",
-    "RDM",
-    "BLM",
-    "SMN",
-    "BRD",
-    "MCH"
-];
 var JOB_ROLE_LIST = {
     "dps-melee"     : [
         "MNK", "SAM", "NIN", "DRG"
@@ -62,13 +45,8 @@ class WidgetCactbotRaidboss extends WidgetBase
         this.tickTimeout = null;
         this.alertTimeout = null;
         this.myData = null;
-        if (!("tts" in this.userConfig)) {
-            this.userConfig["tts"] = true;
-            this._saveUserConfig()
-        }
-        JOB_LIST.sort();
-        if (!("job" in this.userConfig)) {
-            this.userConfig["job"] = JOB_LIST[0];
+        if (!("characterName" in this.userConfig)) {
+            this.userConfig["characterName"] = null;
             this._saveUserConfig();
         }
     }
@@ -126,6 +104,7 @@ class WidgetCactbotRaidboss extends WidgetBase
         var t = this;
         window.addEventListener("act:encounter", function(e) { t._onEncounter(e); });
         window.addEventListener("act:logLine", function(e) { t._onLogLine(e); });
+        window.addEventListener("act:combatant", function(e) { t._onCombatant(e); });
     }
 
     showOptionHelp()
@@ -161,6 +140,15 @@ class WidgetCactbotRaidboss extends WidgetBase
         Modal.open();
         var t = this;
         Modal.addSection("General");
+        Modal.addText(
+            "name",
+            "Character Name",
+            t.userConfig["characterName"],
+            function(name, value) {
+                t.userConfig["characterName"] = value.trim();
+                t._saveUserConfig();
+            }
+        );
         Modal.addCheckbox(
             "tts",
             "Enable TTS Alerts",
@@ -170,16 +158,6 @@ class WidgetCactbotRaidboss extends WidgetBase
                 t._saveUserConfig();
             }
         )
-        Modal.addSection("My Job");
-        Modal.addChoices(
-            "job",
-            JOB_LIST,
-            JOB_LIST.indexOf(this.userConfig["job"]),
-            function(name, value) {
-                t.userConfig["job"] = JOB_LIST[value];
-                t._saveUserConfig();
-            }
-        );
     }
 
     /**
@@ -337,6 +315,38 @@ class WidgetCactbotRaidboss extends WidgetBase
                     this._displayAlert(trigger, matches);
                 }
             }
+        }
+    }
+
+    /**
+     * Process combatant.
+     * @param {Event} event 
+     */
+    _onCombatant(event)
+    {
+        if (
+            this.userConfig["characterName"] && 
+            event.detail.Name == this.userConfig["characterName"] &&
+            (
+                !this.myData || this.myData.me != event.detail.Name || this.myData.job != event.detail.Job
+            )
+        ) {
+            var myRole = null;
+            for (var role in JOB_ROLE_LIST) {
+                if (JOB_ROLE_LIST[role].indexOf(event.detail.Job.toUpperCase()) != -1) {
+                    myRole = role;
+                    break;
+                }
+            }
+            this.myData = {
+                "me"        : this.userConfig["characterName"],
+                "job"       : event.detail.Job.toUpperCase(),
+                "role"      : myRole,
+                "lang"      : CACTBOT_LOCALE_NAME,
+                "currentHP" : 1,
+                "ShortName" : function(name) { return name; },
+                ParseLocaleFloat: parseFloat,
+            };
         }
     }
 
@@ -516,24 +526,8 @@ class WidgetCactbotRaidboss extends WidgetBase
     _displayAlert(trigger, matches)
     {
         var alertElement = this.getBodyElement().getElementsByClassName("cactbotAlert")[0];
-        // construct data object
         if (!this.myData) {
-            var myRole = null;
-            for (var role in JOB_ROLE_LIST) {
-                if (JOB_ROLE_LIST[role].indexOf(this.userConfig["job"]) != -1) {
-                    myRole = role;
-                    break;
-                }
-            }
-            this.myData = {
-                "me"        : null,
-                "job"       : this.userConfig["job"],
-                "role"      : myRole,
-                "lang"      : CACTBOT_LOCALE_NAME,
-                "currentHP" : 1,
-                "ShortName" : function(name) { return name; },
-                ParseLocaleFloat: parseFloat,
-            };
+            return;
         }
         // check condition
         if ("condition" in trigger) {
@@ -545,7 +539,6 @@ class WidgetCactbotRaidboss extends WidgetBase
         if ("preRun" in trigger) {
             trigger.preRun(this.myData, matches);
         }
-
         // display alert
         var alertTextTypes = ["infoText", "alertText", "alarmText"];
         for (var i in alertTextTypes) {
