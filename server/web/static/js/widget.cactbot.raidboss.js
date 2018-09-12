@@ -1,7 +1,8 @@
 var DATA_PATH = "/static/lib/cactbot/ui/raidboss/data";
 var LOAD_SCRIPTS = [
     "/static/lib/cactbot/ui/raidboss/timeline.js",
-    "/static/lib/cactbot/resources/regexes.js"
+    "/static/lib/cactbot/resources/regexes.js",
+    "/static/lib/cactbot/resources/fights.js"
 ]
 
 /**
@@ -17,6 +18,8 @@ class WidgetCactbotRaidboss extends WidgetBase
         this.triggers = {};
         this.timelines = {};
         this.zoneName = "";
+        this.startRegexs = [];
+        this.endRegexs = [];
         this.ready = false;
         this.activeTimeline = null;
         this.tickTimeout = null;
@@ -73,7 +76,11 @@ class WidgetCactbotRaidboss extends WidgetBase
      */
     reset()
     {
-        this.activeTimeline = null;
+        if (this.activeTimeline) {
+            this.activeTimeline.Stop();
+            delete this.activeTimeline;
+            this.activeTimeline = null;
+        }
         this.getBodyElement().getElementsByClassName("cactbotTimerContainer")[0].innerHTML = "";
     }
 
@@ -194,6 +201,24 @@ class WidgetCactbotRaidboss extends WidgetBase
             return;
         }
         this.activeTimeline.OnLogLine(event.detail.LogLine);
+        if (this.activeTimeline) {
+            if (this.startRegexs && this.activeTimeline.timebase <= 0) {
+                for (var i in this.startRegexs) {
+                    if (event.detail.LogLine.match(this.startRegexs[i])) {
+                        this.activeTimeline.SyncTo(1);
+                        break;
+                    }
+                }
+            }
+            if (this.endRegexs && this.activeTimeline.timebase > 0) {
+                for (var i in this.endRegexs) {
+                    if (event.detail.LogLine.match(this.endRegexs[i])) {
+                        this.reset();
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -207,7 +232,16 @@ class WidgetCactbotRaidboss extends WidgetBase
         this.reset();
         // TEST
         //this.zoneName = "Sigmascape V4.0 (Savage)";
+
         var t = this;
+        // load start/end regexs
+        for (var i in gBossFightTriggers) {
+            if (this.zoneName.match(gBossFightTriggers[i].zoneRegex)) {
+                this.startRegexs.push(new RegExp(gBossFightTriggers[i].startRegex));
+                this.endRegexs.push(new RegExp(gBossFightTriggers[i].endRegex));
+            }
+        }
+
         for (var key in this.triggers) {
             if (!("timelineFile" in this.triggers[key])) {
                 continue;
@@ -232,9 +266,8 @@ class WidgetCactbotRaidboss extends WidgetBase
                     console.log(">> Cactbot (raidboss), remove timer, ", eventData, expired);
                     t._removeTimer(eventData, expired);
                 });
-
                 // TEST
-                //this.activeTimeline.OnLogLine(":Kefka:28C2:");
+                //this.activeTimeline.OnLogLine(" 15:........:Kefka:28EC:");
                 break;
             }
         }
@@ -315,7 +348,7 @@ class WidgetCactbotRaidboss extends WidgetBase
             timerElementsList.push(timerElementNodes[i]);
         }
         timerElementsList.sort(function(a, b) {
-            return a.getAttribute("data-sort") > b.getAttribute("data-sort");
+            return a.getAttribute("data-time") > b.getAttribute("data-time");
         });
         for (var i in timerElementsList) {
             timerContainer.appendChild(timerElementsList[i]);
@@ -336,6 +369,9 @@ class WidgetCactbotRaidboss extends WidgetBase
         for (var i = 0; i < timerElementNodes.length; i++) {
             var timerTextElement = timerElementNodes[i].getElementsByClassName("cactbotTimerText")[0];
             var time = Math.floor(timerElementNodes[i].getAttribute("data-time") - fightNow);
+            if (!this._isValidParseNumber(time)) {
+                time = 0;
+            }
             timerTextElement.innerText = (time < 10 ? "0" : "") + time;
         }
         // call again

@@ -403,6 +403,10 @@ class WidgetParse extends WidgetBase
         if (combatant.EncounterID != this.encounterId) {
             return;
         }
+        // don't add combatants with no job
+        if (!combatant.Job.trim()) {
+            return;
+        }
         // update existing
         for (var i = 0; i < this.combatants.length; i++) {
             if (this.combatants[i][0].Name == combatant.Name) {

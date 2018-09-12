@@ -19,6 +19,12 @@ function readUint32(data, pos)
     return new DataView(buf.buffer).getUint32()
 }
 
+function readUint8(data, pos)
+{
+    var buf = data.slice(pos, pos+SIZE_BYTE);
+    return new DataView(buf.buffer).getUint8();
+}
+
 function readByte(data, pos)
 {
     return data[pos];
@@ -26,7 +32,7 @@ function readByte(data, pos)
 
 function readString(data, pos)
 {
-    var strLen = data[pos];
+    var strLen = readUint8(data, pos);
     return new TextDecoder("utf-8").decode(data.slice(pos + 1, pos + 1 + strLen));
 }
 

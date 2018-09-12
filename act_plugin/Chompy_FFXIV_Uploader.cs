@@ -129,7 +129,12 @@ namespace ACT_Plugin
 
         void prepareString(ref List<Byte> sendData, string value)
         {
-            Byte[] valueBytes = Encoding.UTF8.GetBytes(value);
+            Byte[] valueBytes = Encoding.UTF8.GetBytes(
+                value.Substring(
+                    0, 
+                    value.Length > 255 ? 255 : value.Length
+                )
+            );
             sendData.Add((byte) valueBytes.Length);
             sendData.AddRange(valueBytes);
         }

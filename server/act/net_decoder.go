@@ -20,7 +20,7 @@ func readByte(data []byte, pos *int) byte {
 }
 
 func readString(data []byte, pos *int) string {
-	length := int(data[*pos])
+	length := int(uint8(data[*pos]))
 	output := string(data[*pos+1 : *pos+1+length])
 	*pos += 1 + length
 	return output
