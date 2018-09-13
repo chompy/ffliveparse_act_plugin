@@ -88,3 +88,13 @@ func EncodeCombatActionBytes(value *CombatAction) []byte {
 	writeBool(&data, value.Critical)
 	return data
 }
+
+// EncodeLogLineBytes - Create LogLine byte array
+func EncodeLogLineBytes(value *LogLine) []byte {
+	data := make([]byte, 1)
+	data[0] = DataTypeLogLine
+	writeInt32(&data, value.EncounterID)
+	writeTime(&data, value.Time)
+	writeString(&data, value.LogLine)
+	return data
+}

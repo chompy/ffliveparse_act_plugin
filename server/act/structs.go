@@ -59,8 +59,8 @@ type CombatAction struct {
 	Critical    bool
 }
 
-// LogLing - Log line from Act
-type LogLing struct {
+// LogLine - Log line from Act
+type LogLine struct {
 	EncounterID int32
 	Time        time.Time
 	LogLine     string

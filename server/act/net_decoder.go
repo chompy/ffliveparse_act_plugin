@@ -113,16 +113,16 @@ func DecodeCombatActionBytes(data []byte) (CombatAction, error) {
 	}, nil
 }
 
-// DecodeLogLineBytes - Create LogLing struct from incomming data packet
-func DecodeLogLineBytes(data []byte) (LogLing, error) {
+// DecodeLogLineBytes - Create LogLine struct from incomming data packet
+func DecodeLogLineBytes(data []byte) (LogLine, error) {
 	if data[0] != DataTypeLogLine {
-		return LogLing{}, errors.New("invalid data type for LogLing")
+		return LogLine{}, errors.New("invalid data type for LogLine")
 	}
 	pos := 1
 	encounterID := readInt32(data, &pos)
 	time := readTime(data, &pos)
 	logLine := readString(data, &pos)
-	return LogLing{
+	return LogLine{
 		EncounterID: encounterID,
 		Time:        time,
 		LogLine:     logLine,

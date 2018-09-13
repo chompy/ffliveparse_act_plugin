@@ -65,7 +65,10 @@ func (um *UserManager) ParseDataString(data []byte, addr *net.UDPAddr) (*UserDat
 			// update user data
 			userData.UpdateEncounter(encounter)
 			// forward data to web
-			go um.events.Emit("act:encounter", data)
+			go um.events.Emit(
+				"act:encounter",
+				EncodeEncounterBytes(&encounter),
+			)
 			// log
 			dur := encounter.EndTime.Sub(encounter.StartTime)
 			log.Println(
@@ -101,7 +104,10 @@ func (um *UserManager) ParseDataString(data []byte, addr *net.UDPAddr) (*UserDat
 			// update user data
 			userData.UpdateCombatant(combatant)
 			// forward data to web
-			go um.events.Emit("act:combatant", data)
+			go um.events.Emit(
+				"act:combatant",
+				EncodeCombatantBytes(&combatant),
+			)
 			// log
 			log.Println(
 				"Update combatant",
@@ -135,7 +141,10 @@ func (um *UserManager) ParseDataString(data []byte, addr *net.UDPAddr) (*UserDat
 			// add combat action
 			userData.UpdateCombatAction(combatAction)
 			// forward data to web
-			go um.events.Emit("act:combatAction", data)
+			go um.events.Emit(
+				"act:combatAction",
+				EncodeCombatActionBytes(&combatAction),
+			)
 			// log
 			log.Println(
 				"Combat action for encounter",
@@ -165,15 +174,18 @@ func (um *UserManager) ParseDataString(data []byte, addr *net.UDPAddr) (*UserDat
 			if userData == nil {
 				return nil, errors.New("recieved LogLing with no matching UserData")
 			}
+			// parse log line data
+			logLine, err := DecodeLogLineBytes(data)
+			if err != nil {
+				return nil, err
+			}
 			// forward data to web
-			go um.events.Emit("act:logLine", data)
+			go um.events.Emit(
+				"act:logLine",
+				EncodeLogLineBytes(&logLine),
+			)
 			// log LogLines in dev mode
 			if um.devMode {
-				// parse log line data
-				logLine, err := DecodeLogLineBytes(data)
-				if err != nil {
-					return nil, err
-				}
 				// log
 				encounterString := "(none)"
 				if logLine.EncounterID > 0 {
