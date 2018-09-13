@@ -556,17 +556,19 @@ class WidgetCactbotRaidboss extends WidgetBase
                     }
                     alertText = alertText[CACTBOT_LOCALE_NAME];
                 }
-                alertElement.innerText = trigger[alertTextTypes[i]][CACTBOT_LOCALE_NAME];
-                var t = this;
-                if (this.alertTimeout) {
-                    clearTimeout(this.alertTimeout)
+                if (alertText) {
+                    alertElement.innerText = trigger[alertTextTypes[i]][CACTBOT_LOCALE_NAME];
+                    var t = this;
+                    if (this.alertTimeout) {
+                        clearTimeout(this.alertTimeout)
+                    }
+                    this.alertTimeout = setTimeout(
+                        function() {
+                            t.getBodyElement().getElementsByClassName("cactbotAlert")[0].innerText = "";
+                        },
+                        5000
+                    );
                 }
-                this.alertTimeout = setTimeout(
-                    function() {
-                        t.getBodyElement().getElementsByClassName("cactbotAlert")[0].innerText = "";
-                    },
-                    5000
-                );
             }
         }
         // tts
