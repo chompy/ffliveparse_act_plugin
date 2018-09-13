@@ -556,7 +556,7 @@ class WidgetCactbotRaidboss extends WidgetBase
                     }
                     alertText = alertText[CACTBOT_LOCALE_NAME];
                 }
-                alertElement.innerText = trigger.alertText[CACTBOT_LOCALE_NAME];
+                alertElement.innerText = trigger[alertTextTypes[i]][CACTBOT_LOCALE_NAME];
                 var t = this;
                 if (this.alertTimeout) {
                     clearTimeout(this.alertTimeout)
