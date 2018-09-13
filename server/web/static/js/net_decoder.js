@@ -43,6 +43,12 @@ function readString(data, pos)
     return new TextDecoder("utf-8").decode(data.slice(pos + 2, pos + 2 + strLen));
 }
 
+// @see https://stackoverflow.com/questions/40031688/javascript-arraybuffer-to-hex
+function buf2hex(buffer)
+{
+    return Array.prototype.map.call(new Uint8Array(buffer), x => ('00' + x.toString(16)).slice(-2)).join('');
+}
+
 function decodeEncounterBytes(data)
 {
     if (data[0] != DATA_TYPE_ENCOUNTER) {

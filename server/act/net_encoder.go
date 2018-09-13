@@ -33,7 +33,7 @@ func writeString(data *[]byte, value string) {
 	if len(value) > 255 {
 		value = value[0:255]
 	}
-	*data = append(*data, byte(len(value)))
+	writeUint16(data, uint16(len(value)))
 	*data = append(*data, []byte(value)...)
 }
 

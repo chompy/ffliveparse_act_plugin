@@ -19,7 +19,7 @@ window.addEventListener("load", function(e) {
             try {
                 var data = parseMessage(byteArray);
             } catch (e) {
-                console.log(">> Error parsing message,", byteArray);
+                console.log(">> Error parsing message,", buf2hex(byteArray));
                 throw e;
             }
             /*if (data.Type != DATA_TYPE_LOG_LINE) {
