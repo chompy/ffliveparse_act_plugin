@@ -26,12 +26,6 @@ function readUint16(data, pos)
     return new DataView(buf.buffer).getUint16()
 }
 
-function readUint8(data, pos)
-{
-    var buf = data.slice(pos, pos+SIZE_BYTE);
-    return new DataView(buf.buffer).getUint8();
-}
-
 function readByte(data, pos)
 {
     return data[pos];
@@ -71,7 +65,7 @@ function decodeEncounterBytes(data)
     window.dispatchEvent(
         new CustomEvent("act:encounter", {"detail" : output})
     );
-    return output;
+    return pos;
 }
 
 function decodeCombatantBytes(data)
@@ -96,7 +90,7 @@ function decodeCombatantBytes(data)
     window.dispatchEvent(
         new CustomEvent("act:combatant", {"detail" : output})
     );
-    return output;
+    return pos;
 }
 
 function decodeCombatActionBytes(data)
@@ -121,7 +115,7 @@ function decodeCombatActionBytes(data)
     window.dispatchEvent(
         new CustomEvent("act:combatAction", {"detail" : output})
     );
-    return output;
+    return pos;
 }
 
 function decodeLogLineBytes(data)
@@ -135,12 +129,11 @@ function decodeLogLineBytes(data)
     };
     output["EncounterID"]   = readUint32(data, pos).toString(36).toUpperCase(); pos += SIZE_INT32;
     output["Time"]          = readString(data, pos); pos += SIZE_INT16+output["Time"].length;
-    logLineLength           = readInt32(data, pos); pos += SIZE_INT32;
     output["LogLine"]       = readString(data, pos); pos += SIZE_INT16+output["LogLine"].length;
     window.dispatchEvent(
         new CustomEvent("act:logLine", {"detail" : output})
     );
-    return output;
+    return pos;
 }
 
 function parseMessage(data)
@@ -164,5 +157,5 @@ function parseMessage(data)
             return decodeLogLineBytes(data);
         }
     }
-    return null;
+    return 0;
 }

@@ -12,15 +12,22 @@ window.addEventListener("load", function(e) {
         //new WidgetTrigger().add();
         new WidgetCactbotRaidboss().add();
     };
+
     socket.onmessage = function(event) {
+        if (socket.readyState !== 1) {
+            return;
+        }
         var fileReader = new FileReader();
         fileReader.onload = function(event) {
-            var byteArray = new Uint8Array(event.target.result);
+            var buffer = new Uint8Array(event.target.result);
             try {
-                var data = parseMessage(byteArray);
+                var pos = parseMessage(buffer);
+                if (pos <= 0) {
+                    console.log(">> Invalid message recieved,", buf2hex(buffer));
+                    return;
+                }
             } catch (e) {
-                console.log(">> Error parsing message,", buf2hex(byteArray));
-                throw e;
+                console.log(">> Error parsing message,", buf2hex(buffer));
             }
             /*if (data.Type != DATA_TYPE_LOG_LINE) {
                 console.log(">> Recieved message,", data);
