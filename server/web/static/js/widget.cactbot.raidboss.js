@@ -257,8 +257,8 @@ class WidgetCactbotRaidboss extends WidgetBase
      */
     _onEncounter(event)
     {
-        if (!event.detail.Active) {
-            this.reset();
+        if (!event.detail.Active && this.activeTimeline) {
+            this.activeTimeline.Stop();
         }
         if (event.detail.Zone != this.zoneName) {
             this.reset();
@@ -289,7 +289,7 @@ class WidgetCactbotRaidboss extends WidgetBase
         if (this.endRegexs && this.activeTimeline.timebase > 0) {
             for (var i in this.endRegexs) {
                 if (event.detail.LogLine.match(this.endRegexs[i])) {
-                    this.reset();
+                    this.activeTimeline.Stop();
                     return;
                 }
             }
