@@ -41,7 +41,7 @@ class WidgetCactbotRaidboss extends WidgetBase
         this.endRegexs = [];
         this.ready = false;
         this.activeTimeline = null;
-        this.activeTriggers = null;
+        this.activeTriggers = [];
         this.tickTimeout = null;
         this.alertTimeout = null;
         this.myData = null;
@@ -125,8 +125,7 @@ class WidgetCactbotRaidboss extends WidgetBase
             this.activeTimeline.Stop();
             delete this.activeTimeline;
             this.activeTimeline = null;
-            this.activeTriggers = null;
-            this.myData = null;
+            this.activeTriggers = [];
         }
         this.getBodyElement().getElementsByClassName("cactbotTimerContainer")[0].innerHTML = "";
     }
@@ -298,9 +297,9 @@ class WidgetCactbotRaidboss extends WidgetBase
         this.activeTimeline.OnLogLine(event.detail.LogLine);
         // process triggers
         if (this.activeTriggers) {
-            for (var i in this.activeTriggers.triggers) {
-                var trigger = this.activeTriggers.triggers[i];
-                var matches = event.detail.LogLine.match(trigger.regex);
+            for (var i in this.activeTriggers) {
+                var trigger = this.activeTriggers[i];
+                var matches = event.detail.LogLine.match(trigger.localRegex);
                 if (matches) {
                     if ("delaySeconds" in trigger) {
                         var t = this;
@@ -310,7 +309,7 @@ class WidgetCactbotRaidboss extends WidgetBase
                             trigger,
                             matches
                         );
-                        return;
+                        continue;
                     }
                     this._displayAlert(trigger, matches);
                 }
@@ -326,9 +325,9 @@ class WidgetCactbotRaidboss extends WidgetBase
     {
         if (
             this.userConfig["characterName"] && 
-            event.detail.Name == this.userConfig["characterName"] &&
+            event.detail.Name.trim().toLowerCase() == this.userConfig["characterName"].trim().toLowerCase() &&
             (
-                !this.myData || this.myData.me != event.detail.Name || this.myData.job != event.detail.Job
+                !this.myData || this.myData.me != event.detail.Name || this.myData.job.toUpperCase() != event.detail.Job.toUpperCase()
             )
         ) {
             var myRole = null;
@@ -339,7 +338,7 @@ class WidgetCactbotRaidboss extends WidgetBase
                 }
             }
             this.myData = {
-                "me"        : this.userConfig["characterName"],
+                "me"        : event.detail.Name,
                 "job"       : event.detail.Job.toUpperCase(),
                 "role"      : myRole,
                 "lang"      : CACTBOT_LOCALE_NAME,
@@ -347,6 +346,7 @@ class WidgetCactbotRaidboss extends WidgetBase
                 "ShortName" : function(name) { return name; },
                 ParseLocaleFloat: parseFloat,
             };
+            console.log(">> Cactbot (raidboss), set player data,", this.myData);
         }
     }
 
@@ -359,8 +359,9 @@ class WidgetCactbotRaidboss extends WidgetBase
             return;
         }
         this.reset();
+
         // TEST
-        //this.zoneName = "Sigmascape V4.0 (Savage)";
+        //this.zoneName = "The Minstrel's Ballad: Tsukuyomi's Pain";
 
         var t = this;
         // load start/end regexs
@@ -387,7 +388,22 @@ class WidgetCactbotRaidboss extends WidgetBase
                         "MaxNumberOfTimerBars" : 5
                     }
                 );
-                this.activeTriggers = this.triggers[key];
+                // add active triggers
+                this.activeTriggers = [];
+                var localName = CACTBOT_LOCALE_NAME.toLowerCase();
+                localName = CACTBOT_LOCALE_NAME.substr(0, 1).toUpperCase() + CACTBOT_LOCALE_NAME.substr(1).toUpperCase();
+                for (var i in this.triggers[key].triggers) {
+                    var trigger = this.triggers[key].triggers[i];
+                    // parse regex
+                    var regex = trigger.regex;
+                    if (("regex" + localName) in trigger) {
+                        regex = trigger["regex" + localName];
+                    }
+                    regex = Regexes.Parse(regex);
+                    trigger.localRegex  = regex;
+                    this.activeTriggers.push(trigger);
+                }
+                // hook events
                 this.activeTimeline.SetAddTimer(function(currentTime, eventData, active) {
                     console.log(">> Cactbot (raidboss), new timer, ", currentTime, eventData, active);
                     t._setTimer(currentTime, eventData, active);
@@ -396,12 +412,12 @@ class WidgetCactbotRaidboss extends WidgetBase
                     console.log(">> Cactbot (raidboss), remove timer, ", eventData, expired);
                     t._removeTimer(eventData, expired);
                 });
+
                 // TEST
-                /*
-                this.activeTimeline.OnLogLine(" 15:........:Kefka:28EC:");
+                /*this.activeTimeline.OnLogLine(":Tsukuyomi:2BBA:");
                 setTimeout(
                     function() {
-                        t._onLogLine({"detail" : {"LogLine" : "Kefka starts using Future's End"}});
+                        t._onLogLine({"detail" : {"LogLine" : " 1B:........:Minda:....:....:003E:0000:0000:0000:"}});
                     },
                     1000
                 )*/
@@ -525,6 +541,7 @@ class WidgetCactbotRaidboss extends WidgetBase
      */
     _displayAlert(trigger, matches)
     {
+        console.log(">> Cactbot (raidboss), trigger, ", trigger, matches);
         var alertElement = this.getBodyElement().getElementsByClassName("cactbotAlert")[0];
         if (!this.myData) {
             return;
