@@ -1,7 +1,6 @@
-document.getElementById("siteHeader").innerHTML = window.location.host + "/" + SESSION_ID;
 window.addEventListener("load", function(e) {
     var socket = new WebSocket(
-        (window.location.protocol == "https:" ? "wss" : "ws") + "://" + window.location.host + "/ws/" + SESSION_ID
+        (window.location.protocol == "https:" ? "wss" : "ws") + "://" + window.location.host + "/ws/" + WEB_ID
     );
     socket.onopen = function(event) {
         document.getElementById("loadingMessage").remove();

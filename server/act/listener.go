@@ -6,11 +6,8 @@ import (
 	"strconv"
 )
 
-// VersionNumber - Version number, must match number recieved from Act plugin to parse data
-const VersionNumber int32 = 1
-
 // Listen - Start listening for data from Act
-func Listen(port uint16, userManager *UserManager) {
+func Listen(port uint16, manager *Manager) {
 	serverAddr, err := net.ResolveUDPAddr("udp", ":"+strconv.Itoa(int(port)))
 	if err != nil {
 		panic(err)
@@ -26,9 +23,9 @@ func Listen(port uint16, userManager *UserManager) {
 		if err != nil {
 			log.Panicln("Failed to read message from", addr, ",", err)
 		}
-		_, err = userManager.ParseDataString(buf[0:n], addr)
+		_, err = manager.ParseDataString(buf[0:n], addr)
 		if err != nil {
-			log.Println("Error parsing data string from", addr, ",", err)
+			log.Println("Error when parsing data string from", addr, ",", err)
 		}
 	}
 }

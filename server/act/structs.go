@@ -68,8 +68,8 @@ type LogLine struct {
 
 // Session - Data about a specific session
 type Session struct {
-	ID      string
-	IP      net.IP
-	Port    int
-	Created time.Time
+	UploadKey string
+	IP        net.IP
+	Port      int
+	Created   time.Time
 }

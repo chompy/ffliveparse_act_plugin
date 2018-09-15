@@ -6,8 +6,10 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/olebedev/emitter"
 	"github.com/tdewolff/minify"
@@ -17,19 +19,33 @@ import (
 	"golang.org/x/net/websocket"
 
 	"./act"
+	"./app"
+	"./user"
 )
+
+// webKeyCookieName - name of cookie to store web key in
+const webKeyCookieName = "webKey"
+
+// htmlTemplates - map of html templates
+var htmlTemplates map[string]*template.Template
 
 // templateData - Struct containing data to be made available to html template
 type templateData struct {
-	UserData      act.UserData
+	User          user.Data
+	HasUser       bool
+	WebIDString   string
+	ActData       act.Data
+	HasActData    bool
+	AppName       string
 	VersionString string
 	ErrorMessage  string
 }
 
 // HTTPStartServer - Start HTTP server
-func HTTPStartServer(port uint16, userManager *act.UserManager, events *emitter.Emitter, devMode bool) {
+func HTTPStartServer(port uint16, userManager *user.Manager, actManager *act.Manager, events *emitter.Emitter, devMode bool) {
 	// load html templates
-	htmlTemplates, err := getTemplates()
+	var err error
+	htmlTemplates, err = getTemplates()
 	if err != nil {
 		log.Panicln("Error occured while loading HTML templates,", err)
 	}
@@ -72,72 +88,92 @@ func HTTPStartServer(port uint16, userManager *act.UserManager, events *emitter.
 	// setup websocket connections
 	http.Handle("/ws/", websocket.Handler(func(ws *websocket.Conn) {
 		defer ws.Close()
-		// get session id and user data
-		sessionID := strings.Split(strings.TrimLeft(ws.Request().URL.Path, "/"), "/")[1]
-		userData := userManager.GetUserDataWithSessionID(sessionID)
-		if userData == nil {
+		// get web ID string (base36 user ID)
+		webID := strings.Split(strings.TrimLeft(ws.Request().URL.Path, "/"), "/")[1]
+		// get act data from web ID
+		actData := actManager.GetDataWithWebID(webID)
+		// no data, close connection
+		if actData == nil {
 			return
 		}
-		log.Println("New web user with session ID", sessionID, "from", ws.RemoteAddr())
+		// log
+		log.Println("New web socket session for ACT user", actData.User.ID, "from", ws.RemoteAddr())
 		// relay data to new user
-		lastEncounter := userData.GetLastEncounter()
+		lastEncounter := actData.GetLastEncounter()
 		if lastEncounter != nil {
 			websocket.Message.Send(ws, act.EncodeEncounterBytes(lastEncounter))
-			for _, combatant := range userData.GetCombatantsForEncounter(lastEncounter) {
+			for _, combatant := range actData.GetCombatantsForEncounter(lastEncounter) {
 				websocket.Message.Send(ws, act.EncodeCombatantBytes(combatant))
 			}
-			for _, combatAction := range userData.GetCombatActionsForEncounter(lastEncounter) {
+			for _, combatAction := range actData.GetCombatActionsForEncounter(lastEncounter) {
 				websocket.Message.Send(ws, act.EncodeCombatActionBytes(combatAction))
 			}
 		}
 		// add websocket connection to global list
 		websocketConnections = append(websocketConnections, ws)
 		// listen/wait for incomming messages
-		wsReader(ws, userManager)
+		wsReader(ws, actManager)
 	}))
+	http.HandleFunc("/new", func(w http.ResponseWriter, r *http.Request) {
+		// create a new user
+		userData, err := userManager.New()
+		if err != nil {
+			log.Println("Error occured while creating a new user,", err)
+			displayError(
+				w,
+				"An error occured while creating a new user ID.",
+				http.StatusInternalServerError,
+			)
+			return
+		}
+		// set web key to cookie
+		cookie := getWebKeyCookie(userData, r)
+		http.SetCookie(w, &cookie)
+		// perform redirect to home page
+		http.Redirect(w, r, "/", http.StatusFound)
+	})
 	// setup main page/index
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		// parse session id from url path
-		sessionID := strings.TrimLeft(r.URL.Path, "/")
-		// fetch user data
-		var userData *act.UserData
+		// parse web id from url path
+		webID := strings.TrimLeft(r.URL.Path, "/")
+		// fetch act data
+		var actData *act.Data
 		// build template data
-		td := templateData{
-			VersionString: fmt.Sprintf("%.2f", float32(act.VersionNumber)/100.0),
-		}
-		// no session id provided
-		if sessionID == "" {
-			// attempt to fetch user data with ip address
-			addresses := make([]string, 1)
-			addresses[0] = r.RemoteAddr
-			addresses = append(addresses, strings.Split(r.Header.Get("X-Forwarded-For"), ",")...)
-			for _, address := range addresses {
-				ip := strings.TrimSpace(strings.Split(address, ":")[0])
-				userData = userManager.GetLastUserDataWithIP(ip)
-				if userData != nil {
-					break
-				}
-			}
+		td := getBaseTemplateData()
+		// set resposne headers
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		// if web ID provided in URL attempt to serve up main app
+		if webID != "" {
+			actData = actManager.GetDataWithWebID(webID)
 			// user data not found
-			if userData == nil {
-				w.WriteHeader(http.StatusNotFound)
-				td.ErrorMessage = "No sessions found."
-				htmlTemplates.Lookup("error.tmpl").Execute(w, td)
+			if actData == nil {
+				displayError(
+					w,
+					"No active session found for user ID \""+webID+".\".",
+					http.StatusNotFound,
+				)
 				return
 			}
-		} else {
-			userData = userManager.GetUserDataWithSessionID(sessionID)
-			// user data not found
-			if userData == nil {
-				w.WriteHeader(http.StatusNotFound)
-				td.ErrorMessage = "Session \"" + sessionID + "\" was not found."
-				htmlTemplates.Lookup("error.tmpl").Execute(w, td)
-				return
+			// server main app template
+			td.ActData = *actData
+			td.HasActData = true
+			addUserToTemplateData(&td, actData.User)
+			htmlTemplates["app.tmpl"].ExecuteTemplate(w, "base.tmpl", td)
+			return
+		}
+		// get cookie, use it to fetch user data
+		cookie, err := r.Cookie(webKeyCookieName)
+		if err == nil {
+			userData, err := userManager.LoadFromWebKey(cookie.Value)
+			if err == nil {
+				addUserToTemplateData(&td, userData)
+			} else {
+				log.Println("Could not fetch user with web key,", cookie.Value, ",", err)
 			}
 		}
-		// server main app template
-		td.UserData = *userData
-		htmlTemplates.Lookup("app.tmpl").Execute(w, td)
+		// no web id provided, serve up home page with connection info
+		htmlTemplates["home.tmpl"].ExecuteTemplate(w, "base.tmpl", td)
+
 	})
 	// start thread for sending handling act events and sending data back to ws clients
 	go globalWsWriter(&websocketConnections, events)
@@ -145,21 +181,23 @@ func HTTPStartServer(port uint16, userManager *act.UserManager, events *emitter.
 	http.ListenAndServe(":"+strconv.Itoa(int(port)), nil)
 }
 
-func getTemplates() (*template.Template, error) {
-	var allFiles []string
-	files, err := ioutil.ReadDir("./web/templates")
+func getTemplates() (map[string]*template.Template, error) {
+	// create template map
+	var templates = make(map[string]*template.Template)
+	// get path to all include templates
+	includeFiles, err := filepath.Glob("./web/templates/includes/*.tmpl")
 	if err != nil {
 		return nil, err
 	}
-	for _, file := range files {
-		filename := file.Name()
-		if strings.HasSuffix(filename, ".tmpl") {
-			allFiles = append(allFiles, "./web/templates/"+filename)
-		}
-	}
-	templates, err := template.ParseFiles(allFiles...)
+	// get path to all layout templates
+	layoutFiles, err := filepath.Glob("./web/templates/layouts/*.tmpl")
 	if err != nil {
 		return nil, err
+	}
+	// make layout templates
+	for _, layoutFile := range layoutFiles {
+		templateFiles := append(includeFiles, layoutFile)
+		templates[filepath.Base(layoutFile)] = template.Must(template.ParseFiles(templateFiles...))
 	}
 	return templates, nil
 }
@@ -224,9 +262,9 @@ func compileCSS() (string, error) {
 	return compiledCSS, nil
 }
 
-func wsReader(ws *websocket.Conn, userManager *act.UserManager) {
+func wsReader(ws *websocket.Conn, actManager *act.Manager) {
 	for {
-		if ws == nil || userManager == nil {
+		if ws == nil || actManager == nil {
 			break
 		}
 		var data []byte
@@ -253,5 +291,37 @@ func globalWsWriter(websocketConnections *[]*websocket.Conn, events *emitter.Emi
 				)
 			}
 		}
+	}
+}
+
+func getBaseTemplateData() templateData {
+	return templateData{
+		VersionString: app.GetVersionString(),
+		AppName:       app.Name,
+		HasActData:    false,
+		HasUser:       false,
+	}
+}
+
+func addUserToTemplateData(td *templateData, u user.Data) {
+	td.User = u
+	td.WebIDString = u.GetWebIDString()
+	td.HasUser = true
+}
+
+func displayError(w http.ResponseWriter, message string, statusCode int) {
+	w.WriteHeader(statusCode)
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	td := getBaseTemplateData()
+	td.ErrorMessage = message
+	htmlTemplates["error.tmpl"].ExecuteTemplate(w, "base.tmpl", td)
+}
+
+func getWebKeyCookie(user user.Data, r *http.Request) http.Cookie {
+	return http.Cookie{
+		Name:    webKeyCookieName,
+		Value:   user.WebKey,
+		Expires: time.Now().Add(365 * 24 * time.Hour),
+		Domain:  r.URL.Hostname(),
 	}
 }

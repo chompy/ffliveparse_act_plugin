@@ -36,7 +36,6 @@ namespace ACT_Plugin
         );
 
         private Label lblStatus;                                // The status label that appears in ACT's Plugin tab
-        private string sessionUid;                              // Uid of current session
         private UdpClient udpClient;                            // UDP client used to send data
         private string remoteHost;                              // Remote host name to send data to
         private UInt16 remotePort;                              // Remote port
@@ -105,10 +104,10 @@ namespace ACT_Plugin
 
         public void InitPlugin(TabPage pluginScreenSpace, Label pluginStatusText)
         {
-            // generate session uid
-            generateSessionUid();
             // status label
             lblStatus = pluginStatusText; // Hand the status label's reference to our local var
+            // update plugin status text
+            lblStatus.Text = "Plugin version " + ((float) VERSION_NUMBER / 100.0).ToString("n2") + " started.";
             // load settings
             loadSettings();
             // init udp client
@@ -120,8 +119,6 @@ namespace ACT_Plugin
             ActGlobals.oFormActMain.AfterCombatAction += new CombatActionDelegate(oFormActMain_AfterCombatAction);
             ActGlobals.oFormActMain.OnLogLineRead += new LogLineEventDelegate(oFormActMain_OnLogLineRead);
             this.buttonSave.Click += new EventHandler(buttonSave_OnClick);
-            // update plugin status text
-            lblStatus.Text = "Plugin version " + ((float) VERSION_NUMBER / 100.0).ToString("n2") + " started.";
             // form stuff
 			pluginScreenSpace.Controls.Add(this);	// Add this UserControl to the tab ACT provides
 			this.Dock = DockStyle.Fill;	// Expand the UserControl to fill the tab's client space
@@ -171,26 +168,24 @@ namespace ACT_Plugin
             udpConnect();
         }
 
-        void generateSessionUid()
-        {
-            sessionUid = "";
-            Random randGen = new Random(DateTime.Now.GetHashCode());
-            for (int i = 0; i < UID_SIZE; i++) {
-                int randValue = randGen.Next(0, UID_CHAR_LIST.Length);
-                sessionUid += UID_CHAR_LIST[randValue];
-            }
-        }
-
         void udpConnect()
         {
             if (string.IsNullOrEmpty(this.remoteHost) || this.remotePort == 0) {
                 lblStatus.Text = "ERROR: Invalid or missing upload server address.";
                 return;
             }
-            udpClient.Connect(this.remoteHost, this.remotePort);
-            // send session data, multiple times to ensure UDP transmission
-            for (var i = 0; i < 3; i++) {
-                sendSessionData();
+            if (string.IsNullOrEmpty(this.privateKey)) {
+                lblStatus.Text = "ERROR: Private key is not set.";
+                return;                
+            }
+            try {
+                udpClient.Connect(this.remoteHost, this.remotePort);
+                // send session data, multiple times to ensure UDP transmission
+                for (var i = 0; i < 3; i++) {
+                    sendSessionData();
+                }
+            } catch (System.Net.Sockets.SocketException e) {
+                lblStatus.Text = "ERROR: " + e.Message;
             }
         }
 
@@ -235,11 +230,14 @@ namespace ACT_Plugin
 
         void sendSessionData()
         {
+            if (string.IsNullOrEmpty(this.privateKey)) {
+                return;
+            }
             // build send data
             List<Byte> sendData = new List<Byte>();
             sendData.Add(DATA_TYPE_SESSION);
             prepareInt32(ref sendData, VERSION_NUMBER);
-            prepareString(ref sendData, sessionUid);
+            prepareString(ref sendData, this.privateKey);
             // send
             sendUdp(ref sendData);
         }
@@ -356,6 +354,7 @@ namespace ACT_Plugin
                 pos += 2;
                 if (stringLen > 0) {
                     settingStrings.Add(System.Text.Encoding.UTF8.GetString(data.ToArray(), pos, stringLen));
+                    pos += stringLen;
                     continue;
                 }
                 settingStrings.Add("");
@@ -366,6 +365,9 @@ namespace ACT_Plugin
             if (hostData.Length > 1) {
                 UInt16.TryParse(hostData[1], out this.remotePort);
             }
+            // update textboxes
+            textboxPrivateKey.Text = settingStrings[0];
+            textboxHost.Text = settingStrings[1];
         }
 
         void saveSettings()
@@ -378,6 +380,7 @@ namespace ACT_Plugin
             {
                 fs.Write(saveBytes, 0, saveBytes.Length);
             }
+            lblStatus.Text = " Settings saved.";
         }
 
     }

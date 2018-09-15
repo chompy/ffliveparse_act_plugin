@@ -7,6 +7,8 @@ import (
 	"github.com/olebedev/emitter"
 
 	"./act"
+	"./app"
+	"./user"
 )
 
 // ActListenUDPPort - Port act server will listen on
@@ -22,7 +24,7 @@ func main() {
 	flag.Parse()
 
 	// log start
-	log.Printf("Chompy ACT FFXIV Share Server -- Version %.2f\n", (float32(act.VersionNumber) / 100.0))
+	log.Printf("%s -- Version %s\n", app.Name, app.GetVersionString())
 	if *devModePtr {
 		log.Println("Development mode enabled.")
 	}
@@ -31,11 +33,17 @@ func main() {
 	events := emitter.Emitter{}
 
 	// create user manager
-	userManager := act.NewUserManager(&events, *devModePtr)
+	userManager, err := user.NewManager()
+	if err != nil {
+		log.Panicln("Error occured while initalizing the user manager,", err)
+	}
+
+	// create act manager
+	actManager := act.NewManager(&events, &userManager, *devModePtr)
 
 	// start http server
-	go HTTPStartServer(HTTPListenTCPPort, &userManager, &events, *devModePtr)
+	go HTTPStartServer(HTTPListenTCPPort, &userManager, &actManager, &events, *devModePtr)
 
 	// start act listen server
-	act.Listen(ActListenUDPPort, &userManager)
+	act.Listen(ActListenUDPPort, &actManager)
 }

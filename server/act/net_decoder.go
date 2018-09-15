@@ -5,6 +5,8 @@ import (
 	"errors"
 	"net"
 	"time"
+
+	"../app"
 )
 
 func readUint16(data []byte, pos *int) uint16 {
@@ -46,13 +48,13 @@ func DecodeSessionBytes(data []byte, addr *net.UDPAddr) (Session, error) {
 	pos := 1
 	// check version number
 	versionNumber := readInt32(data, &pos)
-	if versionNumber != VersionNumber {
+	if versionNumber != app.VersionNumber {
 		return Session{}, errors.New("version number mismatch")
 	}
 	return Session{
-		ID:   readString(data, &pos),
-		IP:   addr.IP,
-		Port: addr.Port,
+		UploadKey: readString(data, &pos),
+		IP:        addr.IP,
+		Port:      addr.Port,
 	}, nil
 }
 

@@ -1,0 +1,19 @@
+{{ template "base" .}}
+
+
+{{ define "headerLeft" }}
+<span class="textBold siteTitle"><a href="/">{{.AppName}}</a></span> ::
+<span class="webId">{{ .WebIDString }}</span>
+{{ end }}
+
+{{ define "content" }}
+<div id="loadingMessage">Loading...</div>
+<div id="widgetArea"></div>
+{{ end }}
+
+{{ define "scripts" }}
+<script type="text/javascript">
+    var WEB_ID = "{{ .WebIDString }}";
+</script>
+<script type="text/javascript" src="/app.min.js?v={{ .VersionString }}"></script>
+{{ end }}
