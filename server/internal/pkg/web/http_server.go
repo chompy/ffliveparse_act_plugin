@@ -109,10 +109,16 @@ func HTTPStartServer(port uint16, userManager *user.Manager, actManager *act.Man
 		}
 		// log
 		log.Println("New web socket session for ACT user", userData.ID, "from", ws.RemoteAddr())
-		// relay previous encounter data if encounter id was provided
+		// get act data from web ID
+		actData := actManager.GetDataWithWebID(webID)
+		// get encounter id int
+		encounterIDInt := int32(0)
 		if encounterID != "" {
+			encounterIDInt = int32(base36.Decode(encounterID))
+		}
+		// relay previous encounter data if encounter id was provided
+		if encounterID != "" && (actData == nil || encounterIDInt != actData.Encounter.ID) {
 			log.Println("Load previous encounter data (EncounterID:", encounterID, ", UserID:", userData.ID, ")")
-			encounterIDInt := int32(base36.Decode(encounterID))
 			previousEncounter, err := act.GetPreviousEncounter(userData, encounterIDInt)
 			if err != nil {
 				log.Println("Error when attempt to retreive previous encounter", encounterID, "for user", userData.ID, ",", err)

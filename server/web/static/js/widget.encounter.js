@@ -121,6 +121,7 @@ class WidgetEncounter extends WidgetBase
      */
     _updateEncounter(event)
     {
+        this.encounterId = event.detail.ID;
         // new encounter active
         if (!this.startTime && event.detail.Active) {
             this.reset();
@@ -142,7 +143,6 @@ class WidgetEncounter extends WidgetBase
             return;
         }
         this.startTime = event.detail.StartTime;
-        this.encounterId = event.detail.ID;
         // make active encounter
         this.getBodyElement().classList.add("active");  
     }
