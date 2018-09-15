@@ -22,6 +22,7 @@ var JOB_ROLE_LIST = {
         "AST", "SCH", "WHM"
     ]
 };
+var RETRIGGER_DELAY = 3000;
 
 
 /**
@@ -42,6 +43,7 @@ class WidgetCactbotRaidboss extends WidgetBase
         this.ready = false;
         this.activeTimeline = null;
         this.activeTriggers = [];
+        this.delayTriggers = [];
         this.tickTimeout = null;
         this.alertTimeout = null;
         this.myData = null;
@@ -323,14 +325,14 @@ class WidgetCactbotRaidboss extends WidgetBase
                     if ("delaySeconds" in trigger) {
                         var t = this;
                         setTimeout(
-                            function(trigger) { t._displayAlert(trigger, matches); },
+                            function(trigger) { t._executeTrigger(trigger, matches); },
                             trigger.delaySeconds * 1000,
                             trigger,
                             matches
                         );
                         continue;
                     }
-                    this._displayAlert(trigger, matches);
+                    this._executeTrigger(trigger, matches);
                 }
             }
         }
@@ -440,6 +442,12 @@ class WidgetCactbotRaidboss extends WidgetBase
                         t._onLogLine({"detail" : {"LogLine" : "14:28B1:Phantom Train starts using Doom Strike on Minda Silva"}});
                     },
                     1000
+                )
+                setTimeout(
+                    function() {
+                        t._onLogLine({"detail" : {"LogLine" : "14:28B1:Phantom Train starts using Doom Strike on Minda Silva"}});
+                    },
+                    3000
                 )*/
                 break;
             }
@@ -555,14 +563,37 @@ class WidgetCactbotRaidboss extends WidgetBase
     }
 
     /**
-     * Display trigger alert and tts.
+     * Execute trigger, display alert and tts.
      * @param {object} trigger
      * @param {array} matches
      */
-    _displayAlert(trigger, matches)
+    _executeTrigger(trigger, matches)
     {
         console.log(">> Cactbot (raidboss), trigger, ", trigger, matches);
+        // check if recently triggered, ignore if so
+        var index = this.activeTriggers.indexOf(trigger);
+        if (index > -1 && this.delayTriggers.indexOf(index) > -1) {
+            return;
+        }
+        // add to recent trigger list
+        if (index > -1) {
+            this.delayTriggers.push(index);
+            var t = this;
+            // set timeout to remove from recent trigger list
+            setTimeout(
+                function(i) {
+                    var delayTriggerIndex = t.delayTriggers.indexOf(i);
+                    if (delayTriggerIndex > -1) {
+                        t.delayTriggers.splice(delayTriggerIndex, 1);
+                    }
+                },
+                RETRIGGER_DELAY,
+                index
+            );
+        }
+        // get alert element
         var alertElement = this.getBodyElement().getElementsByClassName("cactbotAlert")[0];
+        // must have 'myData'
         if (!this.myData) {
             return;
         }
