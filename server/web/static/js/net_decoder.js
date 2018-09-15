@@ -62,9 +62,12 @@ function decodeEncounterBytes(data)
     
     output["StartTime"]     = new Date(output["StartTime"]);
     output["EndTime"]       = new Date(output["EndTime"]);
-    window.dispatchEvent(
-        new CustomEvent("act:encounter", {"detail" : output})
-    );
+
+    if (!ENCOUNTER_ID || output["ID"] == ENCOUNTER_ID) {
+        window.dispatchEvent(
+            new CustomEvent("act:encounter", {"detail" : output})
+        );
+    }
     return pos;
 }
 
@@ -87,9 +90,11 @@ function decodeCombatantBytes(data)
     output["Hits"]          = readInt32(data, pos); pos += SIZE_INT32;
     output["Heals"]         = readInt32(data, pos); pos += SIZE_INT32;
     output["Kills" ]        = readInt32(data, pos); pos += SIZE_INT32;
-    window.dispatchEvent(
-        new CustomEvent("act:combatant", {"detail" : output})
-    );
+    if (!ENCOUNTER_ID || output["EncounterID"] == ENCOUNTER_ID) {
+        window.dispatchEvent(
+            new CustomEvent("act:combatant", {"detail" : output})
+        );
+    }
     return pos;
 }
 
@@ -112,9 +117,11 @@ function decodeCombatActionBytes(data)
     output["SkillType"]     = readString(data, pos); pos += SIZE_INT16+output["SkillType"].length;
     output["SwingType"]     = readByte(data, pos); pos += SIZE_BYTE;
     output["Critical"]      = readByte(data, pos) != 0; pos += SIZE_BYTE;
-    window.dispatchEvent(
-        new CustomEvent("act:combatAction", {"detail" : output})
-    );
+    if (!ENCOUNTER_ID || output["EncounterID"] == ENCOUNTER_ID) {
+        window.dispatchEvent(
+            new CustomEvent("act:combatAction", {"detail" : output})
+        );
+    }
     return pos;
 }
 
@@ -130,9 +137,11 @@ function decodeLogLineBytes(data)
     output["EncounterID"]   = readUint32(data, pos).toString(36).toUpperCase(); pos += SIZE_INT32;
     output["Time"]          = readString(data, pos); pos += SIZE_INT16+output["Time"].length;
     output["LogLine"]       = readString(data, pos); pos += SIZE_INT16+output["LogLine"].length;
-    window.dispatchEvent(
-        new CustomEvent("act:logLine", {"detail" : output})
-    );
+    if (!ENCOUNTER_ID || output["EncounterID"] == ENCOUNTER_ID) {    
+        window.dispatchEvent(
+            new CustomEvent("act:logLine", {"detail" : output})
+        );
+    }
     return pos;
 }
 

@@ -57,8 +57,14 @@ img.loading {
     float: right;
 }
 
-#header .siteTitle a {
+#header .siteTitle a, #header .webId a {
     text-decoration: none;
+}
+
+#header .encounterId {
+    font-style: italic;
+    font-size: 14px;
+    vertical-align: middle;
 }
 
 #errorOverlay {

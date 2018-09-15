@@ -10,6 +10,7 @@ class WidgetEncounter extends WidgetBase
         super()
         this.startTime = null;
         this.offset = 6000;
+        this.encounterId = "";
         this.combatants = [];
     }
 
@@ -21,6 +22,21 @@ class WidgetEncounter extends WidgetBase
     getTitle()
     {
         return "Encounter";
+    }
+
+    getOptions(){
+        var options = super.getOptions();
+        var t = this;
+        options.push(
+            new WidgetOption(
+                "Permalink",
+                "/static/img/opt_link.png",
+                function() {
+                    window.location.href += "/" + t.encounterId;
+                }
+            )
+        )
+        return options;
     }
 
     add()
@@ -126,6 +142,7 @@ class WidgetEncounter extends WidgetBase
             return;
         }
         this.startTime = event.detail.StartTime;
+        this.encounterId = event.detail.ID;
         // make active encounter
         this.getBodyElement().classList.add("active");  
     }

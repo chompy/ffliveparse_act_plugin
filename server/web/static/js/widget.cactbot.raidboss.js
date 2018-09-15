@@ -49,6 +49,14 @@ class WidgetCactbotRaidboss extends WidgetBase
             this.userConfig["characterName"] = null;
             this._saveUserConfig();
         }
+        if (!("tts" in this.userConfig)) {
+            this.userConfig["tts"] = false;
+            this._saveUserConfig();
+        }
+        if (!("beep" in this.userConfig)) {
+            this.userConfig["beep"] = false;
+            this._saveUserConfig();
+        }
     }
 
     getName()
@@ -139,7 +147,8 @@ class WidgetCactbotRaidboss extends WidgetBase
         Modal.open();
         var t = this;
         Modal.addSection("General");
-        Modal.addText(
+        Modal.addText("Enter your character name to recieve alerts and callouts specific to you.");
+        Modal.addTextbox(
             "name",
             "Character Name",
             t.userConfig["characterName"],
@@ -148,6 +157,7 @@ class WidgetCactbotRaidboss extends WidgetBase
                 t._saveUserConfig();
             }
         );
+        Modal.addSection("Audio");
         Modal.addCheckbox(
             "tts",
             "Enable TTS Alerts",
@@ -156,7 +166,16 @@ class WidgetCactbotRaidboss extends WidgetBase
                 t.userConfig["tts"] = checked;
                 t._saveUserConfig();
             }
-        )
+        );
+        Modal.addCheckbox(
+            "beep",
+            "Enable Alert Beep",
+            this.userConfig["beep"],
+            function(name, checked) {
+                t.userConfig["beep"] = checked;
+                t._saveUserConfig();
+            }
+        );
     }
 
     /**
@@ -573,7 +592,7 @@ class WidgetCactbotRaidboss extends WidgetBase
                 }
                 if (typeof(alertText) != "undefined" && alertText) {
                     alertElement.innerText = alertText
-                    this._playAlertSound();
+                    if (this.userConfig["beep"]) { this._playAlertSound(); }
                     var t = this;
                     if (this.alertTimeout) {
                         clearTimeout(this.alertTimeout)

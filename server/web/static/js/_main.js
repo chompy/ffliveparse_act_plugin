@@ -1,7 +1,9 @@
 window.addEventListener("load", function(e) {
-    var socket = new WebSocket(
-        (window.location.protocol == "https:" ? "wss" : "ws") + "://" + window.location.host + "/ws/" + WEB_ID
-    );
+    var socketUrl = (window.location.protocol == "https:" ? "wss" : "ws") + "://" + window.location.host + "/ws/" + WEB_ID;
+    if (ENCOUNTER_ID) {
+        socketUrl += "/" + ENCOUNTER_ID;
+    }
+    var socket = new WebSocket(socketUrl);
     socket.onopen = function(event) {
         document.getElementById("loadingMessage").remove();
         console.log(">> Connected to server.");

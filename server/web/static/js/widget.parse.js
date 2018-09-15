@@ -149,7 +149,7 @@ class WidgetParse extends WidgetBase
                     e.target.classList.remove("loading");
                 });
                 jobIconImageElement.addEventListener("error", function(e) {
-                    e.target.src = "/static/img/job_none.png";
+                    e.target.src = "/static/img/job/none.png";
                 });
                 break;
             }
@@ -227,7 +227,7 @@ class WidgetParse extends WidgetBase
                 case "job":
                 {
                     var jobIconElement = colElement.getElementsByClassName("parseCombatantJobImage")[0];
-                    var jobIconSrc = "/static/img/job_" + combatant.Job.toLowerCase() + ".png";
+                    var jobIconSrc = "/static/img/job/" + combatant.Job.toLowerCase() + ".png";
                     if (jobIconSrc != jobIconElement.src) {
                         jobIconElement.src = jobIconSrc;
                         jobIconElement.title = combatant.Job.toUpperCase() + " - " + combatant.Name;

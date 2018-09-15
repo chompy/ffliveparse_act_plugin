@@ -1,9 +1,12 @@
 {{ template "base" .}}
 
+{{ define "title" }} :: {{ .WebIDString }}{{ if .EncounterIDString }} :: Encounter {{ .EncounterIDString }}{{ end }}
+{{ end }}
 
 {{ define "headerLeft" }}
 <span class="textBold siteTitle"><a href="/">{{.AppName}}</a></span> ::
-<span class="webId">{{ .WebIDString }}</span>
+<span class="webId"><a href="/{{ .WebIDString }}">{{ .WebIDString }}</a></span>
+{{ if .EncounterIDString }}:: <span class="encounterId">Encounter {{ .EncounterIDString }}{{ end }}
 {{ end }}
 
 {{ define "content" }}
@@ -14,6 +17,7 @@
 {{ define "scripts" }}
 <script type="text/javascript">
     var WEB_ID = "{{ .WebIDString }}";
+    var ENCOUNTER_ID = "{{ .EncounterIDString }}";
 </script>
 <script type="text/javascript" src="/app.min.js?v={{ .VersionString }}"></script>
 {{ end }}

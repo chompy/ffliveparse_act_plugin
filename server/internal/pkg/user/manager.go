@@ -5,11 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	_ "github.com/mattn/go-sqlite3"
-)
+	"../app"
 
-// dataPath - path where user data is stored
-const dataPath = "./data"
+	_ "github.com/mattn/go-sqlite3" // enable sqlite3 db driver
+)
 
 // Manager - manages users data
 type Manager struct {
@@ -38,7 +37,7 @@ func createUserTables(database *sql.DB) error {
 // NewManager - get new user manager
 func NewManager() (Manager, error) {
 	// open database connect, create tables if they do not exist
-	database, err := sql.Open("sqlite3", dataPath+"/users.db")
+	database, err := sql.Open("sqlite3", app.DataPath+"/users.db")
 	if err != nil {
 		return Manager{}, err
 	}
@@ -149,14 +148,20 @@ func (m *Manager) LoadFromWebIDString(webIDString string) (Data, error) {
 	return m.LoadFromID(userID)
 }
 
-// Save - save user data
-/*func (m *Manager) Save(user Data) error {
-
+// Save - save user data, current just updates 'accessed' time
+func (m *Manager) Save(user Data) error {
 	stmt, err := m.database.Prepare(
-		`UPDATE user SET `,
+		`UPDATE user SET accessed = ? WHERE id = ?`,
 	)
-
-}*/
+	if err != nil {
+		return err
+	}
+	_, err = stmt.Exec(
+		time.Now(),
+		user.ID,
+	)
+	return err
+}
 
 // Delete - delete user data from database
 func (m *Manager) Delete(user Data) error {

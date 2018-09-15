@@ -1,4 +1,4 @@
-package main
+package web
 
 import (
 	"fmt"
@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/martinlindhe/base36"
 	"github.com/olebedev/emitter"
 	"github.com/tdewolff/minify"
 	"github.com/tdewolff/minify/css"
@@ -18,9 +19,9 @@ import (
 
 	"golang.org/x/net/websocket"
 
-	"./act"
-	"./app"
-	"./user"
+	"../act"
+	"../app"
+	"../user"
 )
 
 // webKeyCookieName - name of cookie to store web key in
@@ -31,14 +32,13 @@ var htmlTemplates map[string]*template.Template
 
 // templateData - Struct containing data to be made available to html template
 type templateData struct {
-	User          user.Data
-	HasUser       bool
-	WebIDString   string
-	ActData       act.Data
-	HasActData    bool
-	AppName       string
-	VersionString string
-	ErrorMessage  string
+	User              user.Data
+	HasUser           bool
+	WebIDString       string
+	EncounterIDString string
+	AppName           string
+	VersionString     string
+	ErrorMessage      string
 }
 
 // HTTPStartServer - Start HTTP server
@@ -88,25 +88,55 @@ func HTTPStartServer(port uint16, userManager *user.Manager, actManager *act.Man
 	// setup websocket connections
 	http.Handle("/ws/", websocket.Handler(func(ws *websocket.Conn) {
 		defer ws.Close()
+		// split url path in to parts
+		urlPathParts := strings.Split(strings.TrimLeft(ws.Request().URL.Path, "/"), "/")
+		// need at once web ID to be present in url
+		if len(urlPathParts) <= 1 {
+			return
+		}
 		// get web ID string (base36 user ID)
-		webID := strings.Split(strings.TrimLeft(ws.Request().URL.Path, "/"), "/")[1]
-		// get act data from web ID
-		actData := actManager.GetDataWithWebID(webID)
-		// no data, close connection
-		if actData == nil {
+		webID := urlPathParts[1]
+		// get encounter id string
+		encounterID := ""
+		if len(urlPathParts) >= 3 {
+			encounterID = urlPathParts[2]
+		}
+		// fetch user data
+		userData, err := userManager.LoadFromWebIDString(webID)
+		if err != nil {
+			log.Println("Error when attempting to retreive user", webID, ",", err)
 			return
 		}
 		// log
-		log.Println("New web socket session for ACT user", actData.User.ID, "from", ws.RemoteAddr())
-		// relay data to new user
-		lastEncounter := actData.GetLastEncounter()
-		if lastEncounter != nil {
-			websocket.Message.Send(ws, act.EncodeEncounterBytes(lastEncounter))
-			for _, combatant := range actData.GetCombatantsForEncounter(lastEncounter) {
-				websocket.Message.Send(ws, act.EncodeCombatantBytes(combatant))
+		log.Println("New web socket session for ACT user", userData.ID, "from", ws.RemoteAddr())
+		// relay previous encounter data if encounter id was provided
+		if encounterID != "" {
+			log.Println("Load previous encounter data (EncounterID:", encounterID, ", UserID:", userData.ID, ")")
+			encounterIDInt := int32(base36.Decode(encounterID))
+			previousEncounter, err := act.GetPreviousEncounter(userData, encounterIDInt)
+			if err != nil {
+				log.Println("Error when attempt to retreive previous encounter", encounterID, "for user", userData.ID, ",", err)
+				return
 			}
-			for _, combatAction := range actData.GetCombatActionsForEncounter(lastEncounter) {
-				websocket.Message.Send(ws, act.EncodeCombatActionBytes(combatAction))
+			websocket.Message.Send(ws, act.EncodeEncounterBytes(&previousEncounter.Encounter))
+			for _, combatant := range previousEncounter.Combatants {
+				websocket.Message.Send(ws, act.EncodeCombatantBytes(&combatant))
+			}
+			for _, combatAction := range previousEncounter.CombatActions {
+				websocket.Message.Send(ws, act.EncodeCombatActionBytes(&combatAction))
+			}
+		} else {
+			// get act data from web ID
+			actData := actManager.GetDataWithWebID(webID)
+			// relay most current act encounter data
+			if actData != nil && actData.Encounter.ID != 0 {
+				websocket.Message.Send(ws, act.EncodeEncounterBytes(&actData.Encounter))
+				for _, combatant := range actData.Combatants {
+					websocket.Message.Send(ws, act.EncodeCombatantBytes(&combatant))
+				}
+				for _, combatAction := range actData.CombatActions {
+					websocket.Message.Send(ws, act.EncodeCombatActionBytes(&combatAction))
+				}
 			}
 		}
 		// add websocket connection to global list
@@ -134,30 +164,31 @@ func HTTPStartServer(port uint16, userManager *user.Manager, actManager *act.Man
 	})
 	// setup main page/index
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		// parse web id from url path
-		webID := strings.TrimLeft(r.URL.Path, "/")
-		// fetch act data
-		var actData *act.Data
+		// split url path in to parts
+		urlPathParts := strings.Split(strings.TrimLeft(r.URL.Path, "/"), "/")
+		// get web id from url path
+		webID := urlPathParts[0]
 		// build template data
 		td := getBaseTemplateData()
+		// get encounter id from url path
+		if len(urlPathParts) >= 2 {
+			td.EncounterIDString = urlPathParts[1]
+		}
 		// set resposne headers
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		// if web ID provided in URL attempt to serve up main app
 		if webID != "" {
-			actData = actManager.GetDataWithWebID(webID)
-			// user data not found
-			if actData == nil {
+			userData, err := userManager.LoadFromWebIDString(webID)
+			if err != nil {
 				displayError(
 					w,
-					"No active session found for user ID \""+webID+".\".",
+					"Unable to find session for user \""+webID+".\"",
 					http.StatusNotFound,
 				)
+				log.Println("Error when attempting to retreive user", webID, ",", err)
 				return
 			}
-			// server main app template
-			td.ActData = *actData
-			td.HasActData = true
-			addUserToTemplateData(&td, actData.User)
+			addUserToTemplateData(&td, userData)
 			htmlTemplates["app.tmpl"].ExecuteTemplate(w, "base.tmpl", td)
 			return
 		}
@@ -298,7 +329,6 @@ func getBaseTemplateData() templateData {
 	return templateData{
 		VersionString: app.GetVersionString(),
 		AppName:       app.Name,
-		HasActData:    false,
 		HasUser:       false,
 	}
 }

@@ -6,9 +6,10 @@ import (
 
 	"github.com/olebedev/emitter"
 
-	"./act"
-	"./app"
-	"./user"
+	"./internal/pkg/act"
+	"./internal/pkg/app"
+	"./internal/pkg/user"
+	"./internal/pkg/web"
 )
 
 // ActListenUDPPort - Port act server will listen on
@@ -42,7 +43,7 @@ func main() {
 	actManager := act.NewManager(&events, &userManager, *devModePtr)
 
 	// start http server
-	go HTTPStartServer(HTTPListenTCPPort, &userManager, &actManager, &events, *devModePtr)
+	go web.HTTPStartServer(HTTPListenTCPPort, &userManager, &actManager, &events, *devModePtr)
 
 	// start act listen server
 	act.Listen(ActListenUDPPort, &actManager)

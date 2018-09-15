@@ -170,12 +170,12 @@ class Modal
         Modal.getModalBodyElement().appendChild(choicesContainerElement);
     }
 
-    static addText(name, label, value, callback)
+    static addTextbox(name, label, value, callback)
     {
         var textContainerElement = document.createElement("div");
         textContainerElement.classList.add(
-            "modalText",
-            "modalText-" + name
+            "modalTextbox",
+            "modalTextbox-" + name
         );
 
         var textLabelElement = document.createElement("label");

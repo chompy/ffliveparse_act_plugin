@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>FFXIV Chompy</title>
+        <title>{{ .AppName }}{{ template "title" . }}</title>
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="stylesheet" href="/app.min.css?v={{.VersionString}}" />
     </head>
@@ -35,3 +35,4 @@
 </html>
 
 {{ define "scripts" }}{{ end }}
+{{ define "title" }}{{ end }}

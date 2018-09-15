@@ -46,14 +46,15 @@
     font-weight: bold;
 }
 
-#modalBody .modalText {
+#modalBody .modalTextbox {
     margin-top: 10px;
     margin-bottom: 10px;
     font-size: 15px;    
 }
 
-#modalBody .modalText input {
-    margin-left: 5px;
+#modalBody .modalTextbox input {
+    margin-left: 10px;
+    min-width: 200px;
 }
 
 #modalBody .modalCheckbox, #modalBody .modalChoices .modalChoicesChoice {

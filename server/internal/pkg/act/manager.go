@@ -42,7 +42,6 @@ func (m *Manager) ParseDataString(dataStr []byte, addr *net.UDPAddr) (*Data, err
 			if err != nil {
 				return nil, err
 			}
-
 			// act data not currently loaded for user, load it
 			if dataObj == nil {
 				// ensure upload key is present
@@ -51,14 +50,21 @@ func (m *Manager) ParseDataString(dataStr []byte, addr *net.UDPAddr) (*Data, err
 					return nil, err
 				}
 				// create new data
+				actData, err := NewData(session, user)
+				if err != nil {
+					return nil, err
+				}
 				m.data = append(
 					m.data,
-					NewData(session, user),
+					actData,
 				)
+				// save user data, update accessed time
+				m.userManager.Save(user)
 				log.Println("Loaded ACT session for use ", user.ID, "from", addr, "(LoadedDataCount:", len(m.data), ")")
 				break
 			}
-
+			// save user data, update accessed time
+			m.userManager.Save(dataObj.User)
 			// update existing data
 			dataObj.Session = session
 			log.Println("Updated ACT session for user", dataObj.User.ID, "from", addr, "(LoadedDataCount:", len(m.data), ")")
@@ -189,7 +195,7 @@ func (m *Manager) ParseDataString(dataStr []byte, addr *net.UDPAddr) (*Data, err
 		{
 			// data required
 			if dataObj == nil {
-				return nil, errors.New("recieved LogLing with no matching data object")
+				return nil, errors.New("recieved LogLine with no matching data object")
 			}
 			// parse log line data
 			logLine, err := DecodeLogLineBytes(dataStr)
