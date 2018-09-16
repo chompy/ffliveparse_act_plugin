@@ -301,7 +301,7 @@ class WidgetCactbotRaidboss extends WidgetBase
      */
     _onLogLine(event)
     {
-        if (!this.ready || !this.activeTimeline) {
+        if (!this.ready || !this.activeTimeline || event.detail.EncounterID != this.encounterId) {
             return;
         }
         // check for 'start' event
@@ -452,13 +452,13 @@ class WidgetCactbotRaidboss extends WidgetBase
                 /*this.activeTimeline.OnLogLine(":Engage!");
                 setTimeout(
                     function() {
-                        t._onLogLine({"detail" : {"LogLine" : "14:28B1:Phantom Train starts using Doom Strike on Minda Silva"}});
+                        t._onLogLine({"detail" : {"LogLine" : "14:28B1:Phantom Train starts using Doom Strike on Minda Silva", "EncounterID" : this.encounterId}});
                     },
                     1000
                 )
                 setTimeout(
                     function() {
-                        t._onLogLine({"detail" : {"LogLine" : "14:28B1:Phantom Train starts using Doom Strike on Minda Silva"}});
+                        t._onLogLine({"detail" : {"LogLine" : "14:28B1:Phantom Train starts using Doom Strike on Minda Silva", "EncounterID" : this.encounterID}});
                     },
                     3000
                 )*/
