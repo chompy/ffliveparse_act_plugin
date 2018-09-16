@@ -35,6 +35,7 @@ class WidgetCactbotRaidboss extends WidgetBase
     constructor()
     {
         super()
+        this.encounterId = null;
         this.triggers = {};
         this.timelines = {};
         this.zoneName = "";
@@ -46,7 +47,7 @@ class WidgetCactbotRaidboss extends WidgetBase
         this.delayTriggers = [];
         this.tickTimeout = null;
         this.alertTimeout = null;
-        this.myData = null;
+        this.playerData = null;
         if (!("characterName" in this.userConfig)) {
             this.userConfig["characterName"] = null;
             this._saveUserConfig();
@@ -277,11 +278,18 @@ class WidgetCactbotRaidboss extends WidgetBase
      */
     _onEncounter(event)
     {
+        // new encounter
+        if (event.detail.ID != this.encounterId) {
+            this.reset();
+            this.encounterId = event.detail.ID;
+            this.playerData = {};
+        }
+        // encounter ended, stop timeline
         if (!event.detail.Active && this.activeTimeline) {
             this.activeTimeline.Stop();
         }
+        // encounter is in new zone, load new timeline
         if (event.detail.Zone != this.zoneName) {
-            this.reset();
             this.zoneName = event.detail.Zone;
             this._loadTimelineForZone();
         }
@@ -344,11 +352,16 @@ class WidgetCactbotRaidboss extends WidgetBase
      */
     _onCombatant(event)
     {
+        // combatant data not for current encounter
+        if (event.detail.EncounterID != this.encounterId) {
+            return;
+        }
+        // new player data
         if (
             this.userConfig["characterName"] && 
             event.detail.Name.trim().toLowerCase() == this.userConfig["characterName"].trim().toLowerCase() &&
             (
-                !this.myData || this.myData.me != event.detail.Name || this.myData.job.toUpperCase() != event.detail.Job.toUpperCase()
+                !this.playerData || this.playerData.me != event.detail.Name || this.playerData.job.toUpperCase() != event.detail.Job.toUpperCase()
             )
         ) {
             var myRole = null;
@@ -358,7 +371,7 @@ class WidgetCactbotRaidboss extends WidgetBase
                     break;
                 }
             }
-            this.myData = {
+            this.playerData = {
                 "me"        : event.detail.Name,
                 "job"       : event.detail.Job.toUpperCase(),
                 "role"      : myRole,
@@ -368,7 +381,7 @@ class WidgetCactbotRaidboss extends WidgetBase
                 ParseLocaleFloat: parseFloat,
                 "StopCombat": () => this.activeTimeline.Stop(),
             };
-            console.log(">> Cactbot (raidboss), set player data,", this.myData);
+            console.log(">> Cactbot (raidboss), set player data,", this.playerData);
         }
     }
 
@@ -593,19 +606,19 @@ class WidgetCactbotRaidboss extends WidgetBase
         }
         // get alert element
         var alertElement = this.getBodyElement().getElementsByClassName("cactbotAlert")[0];
-        // must have 'myData'
-        if (!this.myData) {
+        // must have 'playerData'
+        if (!this.playerData) {
             return;
         }
         // check condition
         if ("condition" in trigger) {
-            if (!trigger.condition(this.myData, matches)) {
+            if (!trigger.condition(this.playerData, matches)) {
                 return;
             }
         }
         // pre run
         if ("preRun" in trigger) {
-            trigger.preRun(this.myData, matches);
+            trigger.preRun(this.playerData, matches);
         }
         // display alert
         var alertTextTypes = ["infoText", "alertText", "alarmText"];
@@ -613,7 +626,7 @@ class WidgetCactbotRaidboss extends WidgetBase
             if (alertTextTypes[i] in trigger) {
                 var alertText = trigger[alertTextTypes[i]];
                 if (typeof(alertText) == "function") {
-                    alertText = alertText(this.myData, matches);
+                    alertText = alertText(this.playerData, matches);
                 }
                 if (!alertText) {
                     continue;
@@ -641,7 +654,7 @@ class WidgetCactbotRaidboss extends WidgetBase
         if (this.userConfig["tts"] && "tts" in trigger) {
             var tts = trigger.tts;
             if (typeof(tts) == "function") {
-                tts = tts(this.myData, matches);
+                tts = tts(this.playerData, matches);
             }
             if (typeof(tts) == "object") {
                 tts = tts[CACTBOT_LOCALE_NAME];
@@ -653,7 +666,7 @@ class WidgetCactbotRaidboss extends WidgetBase
         }
         // post run
         if ("run" in trigger) {
-            trigger.run(this.myData, trigger);
+            trigger.run(this.playerData, trigger);
         }
     }
 
