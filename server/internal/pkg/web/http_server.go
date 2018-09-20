@@ -129,9 +129,9 @@ func HTTPStartServer(port uint16, userManager *user.Manager, actManager *act.Man
 			for _, combatant := range previousEncounter.Combatants {
 				websocket.Message.Send(ws, act.EncodeCombatantBytes(&combatant))
 			}
-			for _, combatAction := range previousEncounter.CombatActions {
+			/*for _, combatAction := range previousEncounter.CombatActions {
 				websocket.Message.Send(ws, act.EncodeCombatActionBytes(&combatAction))
-			}
+			}*/
 		} else {
 			// get act data from web ID
 			actData := actManager.GetDataWithWebID(webID)
@@ -141,9 +141,9 @@ func HTTPStartServer(port uint16, userManager *user.Manager, actManager *act.Man
 				for _, combatant := range actData.Combatants {
 					websocket.Message.Send(ws, act.EncodeCombatantBytes(&combatant))
 				}
-				for _, combatAction := range actData.CombatActions {
+				/*for _, combatAction := range actData.CombatActions {
 					websocket.Message.Send(ws, act.EncodeCombatActionBytes(&combatAction))
-				}
+				}*/
 			}
 		}
 		// add websocket connection to global list

@@ -30,9 +30,6 @@ window.addEventListener("load", function(e) {
             } catch (e) {
                 console.log(">> Error parsing message,", buf2hex(buffer));
             }
-            /*if (data.Type != DATA_TYPE_LOG_LINE) {
-                console.log(">> Recieved message,", data);
-            }*/
         };
         fileReader.readAsArrayBuffer(event.data);
     };
@@ -44,4 +41,20 @@ window.addEventListener("load", function(e) {
         document.getElementById("errorOverlay").classList.remove("hide");
         console.log(">> An error has occured,", event);
     };
+    // log incoming data
+    var lastEncounterId = null;
+    var currentCombatants = [];
+    window.addEventListener("act:encounter", function(e) {
+        if (e.detail.ID != lastEncounterId) {
+            console.log(">> Receieved new encounter, ", e.detail);
+            lastEncounterId = e.detail.ID;
+            currentCombatants = [];
+        }
+    });
+    window.addEventListener("act:combatant", function(e) {
+        if (currentCombatants.indexOf(e.detail.Name) == -1) {
+            console.log(">> Receieved new combatant, ", e.detail);
+            currentCombatants.push(e.detail.Name);
+        }
+    });
 });

@@ -5,11 +5,13 @@ import (
 	"log"
 	"net"
 	"net/url"
+	"time"
 
 	"github.com/olebedev/emitter"
 
 	"github.com/martinlindhe/base36"
 
+	"../app"
 	"../user"
 )
 
@@ -58,6 +60,8 @@ func (m *Manager) ParseDataString(dataStr []byte, addr *net.UDPAddr) (*Data, err
 					m.data,
 					actData,
 				)
+				// start ticks
+				go m.doTick(&m.data[len(m.data)-1])
 				// save user data, update accessed time
 				m.userManager.Save(user)
 				log.Println("Loaded ACT session for use ", user.ID, "from", addr, "(LoadedDataCount:", len(m.data), ")")
@@ -83,11 +87,6 @@ func (m *Manager) ParseDataString(dataStr []byte, addr *net.UDPAddr) (*Data, err
 			}
 			// update data
 			dataObj.UpdateEncounter(encounter)
-			// forward data to web
-			go m.events.Emit(
-				"act:encounter",
-				EncodeEncounterBytes(&encounter),
-			)
 			// log
 			dur := encounter.EndTime.Sub(encounter.StartTime)
 			log.Println(
@@ -122,11 +121,6 @@ func (m *Manager) ParseDataString(dataStr []byte, addr *net.UDPAddr) (*Data, err
 			}
 			// update user data
 			dataObj.UpdateCombatant(combatant)
-			// forward data to web
-			go m.events.Emit(
-				"act:combatant",
-				EncodeCombatantBytes(&combatant),
-			)
 			// log
 			log.Println(
 				"Update combatant",
@@ -162,10 +156,11 @@ func (m *Manager) ParseDataString(dataStr []byte, addr *net.UDPAddr) (*Data, err
 			// add combat action
 			dataObj.UpdateCombatAction(combatAction)
 			// forward data to web
-			go m.events.Emit(
+			// ignore for now, not sure we need this
+			/*go m.events.Emit(
 				"act:combatAction",
 				EncodeCombatActionBytes(&combatAction),
-			)
+			)*/
 			// log
 			log.Println(
 				"Combat action for encounter",
@@ -232,6 +227,30 @@ func (m *Manager) ParseDataString(dataStr []byte, addr *net.UDPAddr) (*Data, err
 		}
 	}
 	return dataObj, nil
+}
+
+// doTick - ticks every app.TickRate milliseconds
+func (m *Manager) doTick(data *Data) {
+	for range time.Tick(app.TickRate * time.Millisecond) {
+		if data == nil {
+			return
+		}
+		if data.Encounter.ID == 0 {
+			continue
+		}
+		// emit encounter event
+		go m.events.Emit(
+			"act:encounter",
+			EncodeEncounterBytes(&data.Encounter),
+		)
+		// emit combatant events
+		for _, combatant := range data.Combatants {
+			go m.events.Emit(
+				"act:combatant",
+				EncodeCombatantBytes(&combatant),
+			)
+		}
+	}
 }
 
 // GetDataWithAddr - retrieve data with UDP address
