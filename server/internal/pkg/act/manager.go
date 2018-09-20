@@ -21,6 +21,7 @@ type Manager struct {
 	events      *emitter.Emitter
 	userManager *user.Manager
 	devMode     bool
+	newTickData bool
 }
 
 // NewManager - create new act manager
@@ -87,6 +88,8 @@ func (m *Manager) ParseDataString(dataStr []byte, addr *net.UDPAddr) (*Data, err
 			}
 			// update data
 			dataObj.UpdateEncounter(encounter)
+			// flag that new data should be sent next tick
+			m.newTickData = true
 			// log
 			dur := encounter.EndTime.Sub(encounter.StartTime)
 			log.Println(
@@ -121,6 +124,8 @@ func (m *Manager) ParseDataString(dataStr []byte, addr *net.UDPAddr) (*Data, err
 			}
 			// update user data
 			dataObj.UpdateCombatant(combatant)
+			// flag that new data should be sent next tick
+			m.newTickData = true
 			// log
 			log.Println(
 				"Update combatant",
@@ -236,6 +241,9 @@ func (m *Manager) doTick(data *Data) {
 			return
 		}
 		if data.Encounter.ID == 0 {
+			continue
+		}
+		if !m.newTickData {
 			continue
 		}
 		// emit encounter event
