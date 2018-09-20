@@ -304,7 +304,7 @@ func GetPreviousEncounter(user user.Data, encounterID int32) (Data, error) {
 	}
 	// fetch combatants
 	rows, err = database.Query(
-		"SELECT encounter_id, name, job, damage, damage_taken, damage_healed, deaths, hits, heals, kills FROM combatant WHERE encounter_id = ? LIMIT 1",
+		"SELECT encounter_id, name, job, damage, damage_taken, damage_healed, deaths, hits, heals, kills FROM combatant WHERE encounter_id = ?",
 		encounterID,
 	)
 	if err != nil {
@@ -332,7 +332,7 @@ func GetPreviousEncounter(user user.Data, encounterID int32) (Data, error) {
 	}
 	// fetch combat actions
 	rows, err = database.Query(
-		"SELECT encounter_id, time, sort, attacker, victim, damage, skill, skill_type, swing_type, critical FROM combat_action WHERE encounter_id = ? LIMIT 1",
+		"SELECT encounter_id, time, sort, attacker, victim, damage, skill, skill_type, swing_type, critical FROM combat_action WHERE encounter_id = ?",
 		encounterID,
 	)
 	if err != nil {

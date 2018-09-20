@@ -33,6 +33,7 @@ class WidgetParse extends WidgetBase
         super();
         this.encounterId = null;
         this.encounterDuration = 0;
+        this.encounterDamage = 0;
         this.combatants = [];
         if (!("showColumns" in this.userConfig)) {
             this.userConfig["showColumns"] = [
@@ -212,10 +213,8 @@ class WidgetParse extends WidgetBase
     _updateCombatantElement(combatant, element)
     {
         // calculate percents
-        var damageTotal = 0;
         var healingTotal = 0;
         for (var i in this.combatants) {
-            damageTotal += this.combatants[i][0].Damage;
             healingTotal += this.combatants[i][0].DamageHealed;
         }
         // itterate columns, update values
@@ -244,13 +243,6 @@ class WidgetParse extends WidgetBase
                         dps = 0;
                     }
                     dpsElement.innerText = dps.toFixed(2);
-                    // damage percent
-                    var damagePercentElement = colElement.getElementsByClassName("parseCombatantDamagePercent")[0];
-                    var damagePercent = Math.floor(combatant.Damage * (100 / damageTotal));
-                    if (!this._isValidParseNumber(damagePercent)) {
-                        damagePercent = 0;
-                    }
-                    damagePercentElement.innerText = damagePercent + "%";
                     break;
                 }
                 case "healing":
@@ -282,6 +274,38 @@ class WidgetParse extends WidgetBase
                     break;
                 }
             }
+        }
+    }
+
+    /**
+     * Update dps and heal percentage values.
+     */
+    _updateCombatantPercents()
+    {
+        // calculate healing total
+        var healingTotal = 0;
+        for (var i in this.combatants) {
+            healingTotal += this.combatants[i][0].DamageHealed;
+        }
+        // update percents for each combatant
+        for (var i in this.combatants) {
+            var combatant = this.combatants[i][0];
+            var element = this.combatants[i][1];
+            // damage percent
+            var damagePercentElement = element.getElementsByClassName("parseCombatantDamagePercent")[0];
+            var healingPercentElement = element.getElementsByClassName("parseCombatantHealingPercent")[0];
+            var damagePercent = Math.floor(combatant.Damage * (100 / this.encounterDamage));
+            if (!this._isValidParseNumber(damagePercent)) {
+                damagePercent = 0;
+            }
+            damagePercentElement.innerText = damagePercent + "%";
+            // healing percent
+            var healingPercentElement = element.getElementsByClassName("parseCombatantHealingPercent")[0];
+            var healingPercent = Math.floor(combatant.DamageHealed * (100 / healingTotal));
+            if (!this._isValidParseNumber(healingPercent)) {
+                healingPercent = 0;
+            }
+            healingPercentElement.innerText = healingPercent + "%";
         }
     }
 
@@ -379,6 +403,7 @@ class WidgetParse extends WidgetBase
             this.reset();
             this.encounterId = event.detail.ID;
         }
+        this.encounterDamage = event.detail.Damage;
         // update encounter duration
         this.encounterDuration = (event.detail.EndTime.getTime() - event.detail.StartTime.getTime()) / 1000
         if (!this._isValidParseNumber(this.encounterDuration)) {
@@ -394,6 +419,7 @@ class WidgetParse extends WidgetBase
         }
         // display combatants
         this._displayCombatants();
+        this._updateCombatantPercents();
     }
 
     _updateCombatants(event)
@@ -434,6 +460,7 @@ class WidgetParse extends WidgetBase
         );
         // display
         this._displayCombatants();
+        this._updateCombatantPercents();
     }
 
     showOptionConfig()

@@ -125,6 +125,7 @@ func HTTPStartServer(port uint16, userManager *user.Manager, actManager *act.Man
 				return
 			}
 			websocket.Message.Send(ws, act.EncodeEncounterBytes(&previousEncounter.Encounter))
+			log.Println("Send combatants for encounter", encounterID, "(Count:", len(previousEncounter.Combatants), ")")
 			for _, combatant := range previousEncounter.Combatants {
 				websocket.Message.Send(ws, act.EncodeCombatantBytes(&combatant))
 			}
