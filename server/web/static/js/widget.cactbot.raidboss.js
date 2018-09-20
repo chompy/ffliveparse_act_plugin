@@ -582,7 +582,7 @@ class WidgetCactbotRaidboss extends WidgetBase
      */
     _executeTrigger(trigger, matches)
     {
-        console.log(">> Cactbot (raidboss), trigger, ", trigger, matches);
+        //console.log(">> Cactbot (raidboss), trigger, ", trigger, matches);
         // check if recently triggered, ignore if so
         var index = this.activeTriggers.indexOf(trigger);
         if (index > -1 && this.delayTriggers.indexOf(index) > -1) {

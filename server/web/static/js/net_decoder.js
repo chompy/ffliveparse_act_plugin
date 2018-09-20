@@ -8,6 +8,8 @@ var SIZE_BYTE = 1;
 var SIZE_INT16 = 2;
 var SIZE_INT32 = 4;
 
+var totalBytesRecieved= 0;
+
 function readInt32(data, pos)
 {
     var buf = data.slice(pos, pos+SIZE_INT32);
@@ -147,6 +149,7 @@ function decodeLogLineBytes(data)
 
 function parseMessage(data)
 {
+    totalBytesRecieved += data.length;
     switch (data[0])
     {
         case DATA_TYPE_ENCOUNTER:
