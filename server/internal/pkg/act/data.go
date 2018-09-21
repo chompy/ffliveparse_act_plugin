@@ -17,6 +17,7 @@ type Data struct {
 	Encounter     Encounter
 	Combatants    []Combatant
 	CombatActions []CombatAction
+	LogLines      []LogLine
 	database      *sql.DB
 }
 
@@ -98,6 +99,16 @@ func (d *Data) UpdateCombatAction(combatAction CombatAction) {
 	}
 	// add
 	d.CombatActions = append(d.CombatActions, combatAction)
+}
+
+// UpdateLogLine - Add log line
+func (d *Data) UpdateLogLine(logLine LogLine) {
+	d.LogLines = append(d.LogLines, logLine)
+}
+
+// ClearLogLines - Clear log line buffer
+func (d *Data) ClearLogLines() {
+	d.LogLines = make([]LogLine, 0)
 }
 
 // getDatabase - get encounter database for given user

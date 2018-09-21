@@ -22,11 +22,7 @@ window.addEventListener("load", function(e) {
         fileReader.onload = function(event) {
             var buffer = new Uint8Array(event.target.result);
             try {
-                var pos = parseMessage(buffer);
-                if (pos <= 0) {
-                    console.log(">> Invalid message recieved,", buf2hex(buffer));
-                    return;
-                }
+                parseMessage(buffer);
             } catch (e) {
                 console.log(">> Error parsing message,", buf2hex(buffer));
             }

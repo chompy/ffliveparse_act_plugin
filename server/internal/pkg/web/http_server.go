@@ -41,6 +41,13 @@ type templateData struct {
 	ErrorMessage      string
 }
 
+// websocketConnection - Websocket connection data associated with user data
+type websocketConnection struct {
+	connection *websocket.Conn
+	actData    *act.Data
+	userData   user.Data
+}
+
 // HTTPStartServer - Start HTTP server
 func HTTPStartServer(port uint16, userManager *user.Manager, actManager *act.Manager, events *emitter.Emitter, devMode bool) {
 	// load html templates
@@ -50,7 +57,7 @@ func HTTPStartServer(port uint16, userManager *user.Manager, actManager *act.Man
 		log.Panicln("Error occured while loading HTML templates,", err)
 	}
 	// websocket connection list
-	websocketConnections := make([]*websocket.Conn, 0)
+	websocketConnections := make([]websocketConnection, 0)
 	// serve static assets
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./web/static"))))
 	// compile/minify javascript, serve compiled js
@@ -147,7 +154,14 @@ func HTTPStartServer(port uint16, userManager *user.Manager, actManager *act.Man
 			}
 		}
 		// add websocket connection to global list
-		websocketConnections = append(websocketConnections, ws)
+		websocketConnections = append(
+			websocketConnections,
+			websocketConnection{
+				connection: ws,
+				actData:    actData,
+				userData:   userData,
+			},
+		)
 		// listen/wait for incomming messages
 		wsReader(ws, actManager)
 	}))
@@ -316,16 +330,19 @@ func wsReader(ws *websocket.Conn, actManager *act.Manager) {
 	}
 }
 
-func globalWsWriter(websocketConnections *[]*websocket.Conn, events *emitter.Emitter) {
+func globalWsWriter(websocketConnections *[]websocketConnection, events *emitter.Emitter) {
 	for {
 		if websocketConnections == nil {
 			break
 		}
 		for event := range events.On("act:*") {
 			for _, websocketConnection := range *websocketConnections {
+				if websocketConnection.connection == nil || websocketConnection.actData == nil || event.Args[0] != websocketConnection.userData.ID {
+					continue
+				}
 				websocket.Message.Send(
-					websocketConnection,
-					event.Args[0],
+					websocketConnection.connection,
+					event.Args[1],
 				)
 			}
 		}

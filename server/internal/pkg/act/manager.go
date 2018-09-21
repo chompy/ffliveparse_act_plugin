@@ -63,6 +63,7 @@ func (m *Manager) ParseDataString(dataStr []byte, addr *net.UDPAddr) (*Data, err
 				)
 				// start ticks
 				go m.doTick(&m.data[len(m.data)-1])
+				go m.doLogTick(&m.data[len(m.data)-1])
 				// save user data, update accessed time
 				m.userManager.Save(user)
 				log.Println("Loaded ACT session for use ", user.ID, "from", addr, "(LoadedDataCount:", len(m.data), ")")
@@ -202,11 +203,8 @@ func (m *Manager) ParseDataString(dataStr []byte, addr *net.UDPAddr) (*Data, err
 			if err != nil {
 				return nil, err
 			}
-			// forward data to web
-			go m.events.Emit(
-				"act:logLine",
-				EncodeLogLineBytes(&logLine),
-			)
+			// add log line
+			dataObj.UpdateLogLine(logLine)
 			// log LogLines in dev mode
 			if m.devMode {
 				// log
@@ -249,15 +247,47 @@ func (m *Manager) doTick(data *Data) {
 		// emit encounter event
 		go m.events.Emit(
 			"act:encounter",
+			data.User.ID,
 			EncodeEncounterBytes(&data.Encounter),
 		)
 		// emit combatant events
+		sendBytes := make([]byte, 0)
 		for _, combatant := range data.Combatants {
+			sendBytes = append(sendBytes, EncodeCombatantBytes(&combatant)...)
+		}
+		if len(sendBytes) > 0 {
 			go m.events.Emit(
 				"act:combatant",
-				EncodeCombatantBytes(&combatant),
+				data.User.ID,
+				sendBytes,
 			)
 		}
+	}
+}
+
+// doLogTick - ticks every app.LogTickRate milliseconds
+func (m *Manager) doLogTick(data *Data) {
+	for range time.Tick(app.LogTickRate * time.Millisecond) {
+		if data == nil {
+			return
+		}
+		if len(data.LogLines) == 0 {
+			continue
+		}
+		// emit log line events
+		sendBytes := make([]byte, 0)
+		for _, logLine := range data.LogLines {
+			sendBytes = append(sendBytes, EncodeLogLineBytes(&logLine)...)
+		}
+		if len(sendBytes) > 0 {
+			go m.events.Emit(
+				"act:logLine",
+				data.User.ID,
+				sendBytes,
+			)
+		}
+		// clear log line buffer
+		data.ClearLogLines()
 	}
 }
 
