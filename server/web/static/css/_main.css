@@ -59,6 +59,29 @@ img.loading {
 
 #header .siteTitle a, #header .webId a {
     text-decoration: none;
+    vertical-align: middle;
+}
+
+#header .onlineStatus {
+    vertical-align: middle;
+    font-size: 12px;
+    color: #7b0101;
+}
+
+#header .onlineStatus.online {
+    color: #91bd00;
+}
+
+#header .onlineStatus::before {
+    display: inline-block;
+    content: "(";
+    color: #fff;
+}
+
+#header .onlineStatus::after {
+    display: inline-block;
+    content: ")";
+    color: #fff;
 }
 
 #header .encounterId {

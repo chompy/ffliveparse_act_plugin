@@ -54,4 +54,20 @@ window.addEventListener("load", function(e) {
             currentCombatants.push(e.detail.Name);
         }
     });
+
+    // flags
+    window.addEventListener("onFlag", function(e) {
+        console.log(">> Received flag, ", e.detail);
+        if (e.detail.Name == "active") {
+            var onlineStatusElement = document.getElementsByClassName("onlineStatus")[0];
+            onlineStatusElement.innerText = e.detail.Value ? "Online" : "Offline";
+            onlineStatusElement.classList.remove("online");
+            onlineStatusElement.title = "ACT was not detected.";
+            if (e.detail.Value) {
+                onlineStatusElement.classList.add("online");
+                onlineStatusElement.title = "ACT detected.";
+            }
+        }
+    });
+
 });

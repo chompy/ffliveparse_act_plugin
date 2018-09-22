@@ -3,12 +3,16 @@ package act
 import (
 	"database/sql"
 	"log"
+	"time"
 
 	"github.com/martinlindhe/base36"
 
 	"../app"
 	"../user"
 )
+
+// lastUpdateInactiveTime - Time in ms between last data updata before data is considered inactive
+const lastUpdateInactiveTime = 300000
 
 // Data - data about an ACT session
 type Data struct {
@@ -17,6 +21,7 @@ type Data struct {
 	Encounter  Encounter
 	Combatants []Combatant
 	LogLines   []LogLine
+	LastUpdate time.Time
 }
 
 // NewData - create new ACT session data
@@ -35,11 +40,13 @@ func NewData(session Session, user user.Data) (Data, error) {
 		User:       user,
 		Encounter:  Encounter{ID: 0},
 		Combatants: make([]Combatant, 0),
+		LastUpdate: time.Now(),
 	}, nil
 }
 
 // UpdateEncounter - Add or update encounter data
 func (d *Data) UpdateEncounter(encounter Encounter) {
+	d.LastUpdate = time.Now()
 	// check if encounter update is for current counter
 	// update it if so
 	if encounter.ID == d.Encounter.ID {
@@ -65,6 +72,7 @@ func (d *Data) UpdateEncounter(encounter Encounter) {
 
 // UpdateCombatant - Add or update combatant data
 func (d *Data) UpdateCombatant(combatant Combatant) {
+	d.LastUpdate = time.Now()
 	// ensure there is a current encounter and that data is for it
 	if combatant.EncounterID == 0 || d.Encounter.ID == 0 || combatant.EncounterID != d.Encounter.ID {
 		return
@@ -83,6 +91,7 @@ func (d *Data) UpdateCombatant(combatant Combatant) {
 
 // UpdateLogLine - Add log line
 func (d *Data) UpdateLogLine(logLine LogLine) {
+	d.LastUpdate = time.Now()
 	d.LogLines = append(d.LogLines, logLine)
 }
 
@@ -285,4 +294,10 @@ func GetPreviousEncounter(user user.Data, encounterID int32) (Data, error) {
 		Encounter:  encounter,
 		Combatants: combatants,
 	}, nil
+}
+
+// IsActive - Check if data is actively being updated (i.e. active ACT connection)
+func (d *Data) IsActive() bool {
+	dur := time.Now().Sub(d.LastUpdate)
+	return int64(dur/time.Millisecond) < lastUpdateInactiveTime
 }

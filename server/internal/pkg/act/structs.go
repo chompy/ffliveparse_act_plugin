@@ -17,6 +17,9 @@ const DataTypeCombatant byte = 3
 // DataTypeLogLine - Data type, log line
 const DataTypeLogLine byte = 5
 
+// DataTypeFlag - Data type, boolean flag
+const DataTypeFlag byte = 99
+
 // Combatant - Data about a combatant
 type Combatant struct {
 	EncounterID  int32
@@ -55,4 +58,10 @@ type Session struct {
 	IP        net.IP
 	Port      int
 	Created   time.Time
+}
+
+// Flag - Boolean flag with name
+type Flag struct {
+	Name  string
+	Value bool
 }

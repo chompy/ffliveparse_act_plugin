@@ -1,8 +1,8 @@
 
 var DATA_TYPE_ENCOUNTER = 2;
 var DATA_TYPE_COMBATANT = 3;
-var DATA_TYPE_COMBAT_ACTION = 4;
 var DATA_TYPE_LOG_LINE = 5;
+var DATA_TYPE_FLAG = 99;
 
 var SIZE_BYTE = 1;
 var SIZE_INT16 = 2;
@@ -149,6 +149,23 @@ function decodeLogLineBytes(data)
     return pos;
 }
 
+function decodeFlagBytes(data)
+{
+    if (data[0] != DATA_TYPE_FLAG) {
+        return 0;
+    }
+    var pos = 1;
+    var output = {
+        "Type" : DATA_TYPE_FLAG
+    };
+    output["Name"]          = readString(data, pos); pos += readUint16(data, pos) + SIZE_INT16;
+    output["Value"]         = readByte(data, pos) != 0; pos += SIZE_BYTE;
+    window.dispatchEvent(
+        new CustomEvent("onFlag", {"detail" : output})
+    );
+    return pos;
+}
+
 function parseMessage(data)
 {
     totalBytesRecieved += data.length;
@@ -169,14 +186,14 @@ function parseMessage(data)
                 length = decodeCombatantBytes(data.slice(pos));
                 break;
             }
-            case DATA_TYPE_COMBAT_ACTION:
-            {
-                length = decodeCombatActionBytes(data.slice(pos));
-                break;
-            }
             case DATA_TYPE_LOG_LINE:
             {
                 length = decodeLogLineBytes(data.slice(pos));
+                break;
+            }
+            case DATA_TYPE_FLAG:
+            {
+                length = decodeFlagBytes(data.slice(pos));
                 break;
             }
         }

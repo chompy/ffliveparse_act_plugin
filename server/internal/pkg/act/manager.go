@@ -67,6 +67,17 @@ func (m *Manager) ParseDataString(dataStr []byte, addr *net.UDPAddr) (*Data, err
 				// save user data, update accessed time
 				m.userManager.Save(user)
 				log.Println("Loaded ACT session for use ", user.ID, "from", addr, "(LoadedDataCount:", len(m.data), ")")
+				// emit act active event
+				activeFlag := Flag{Name: "active", Value: true}
+				activeFlagBytes, err := CompressBytes(EncodeFlagBytes(&activeFlag))
+				if err != nil {
+					return nil, err
+				}
+				go m.events.Emit(
+					"act:active",
+					user.ID,
+					activeFlagBytes,
+				)
 				break
 			}
 			// save user data, update accessed time

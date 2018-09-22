@@ -6,6 +6,7 @@
 {{ define "headerLeft" }}
 <span class="textBold siteTitle"><a href="/">{{.AppName}}</a></span> ::
 <span class="webId"><a href="/{{ .WebIDString }}">{{ .WebIDString }}</a></span>
+<span class="onlineStatus" title="ACT not detected.">Offline</span>
 {{ if .EncounterIDString }}:: <span class="encounterId">Encounter {{ .EncounterIDString }}{{ end }}
 {{ end }}
 

@@ -84,6 +84,15 @@ func EncodeLogLineBytes(value *LogLine) []byte {
 	return data
 }
 
+// EncodeFlagBytes - Create flag byte array
+func EncodeFlagBytes(value *Flag) []byte {
+	data := make([]byte, 1)
+	data[0] = DataTypeFlag
+	writeString(&data, value.Name)
+	writeBool(&data, value.Value)
+	return data
+}
+
 // CompressBytes - Compress byte array for sending
 func CompressBytes(data []byte) ([]byte, error) {
 	var gzBytes bytes.Buffer

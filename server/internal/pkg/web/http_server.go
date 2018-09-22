@@ -44,7 +44,6 @@ type templateData struct {
 // websocketConnection - Websocket connection data associated with user data
 type websocketConnection struct {
 	connection *websocket.Conn
-	actData    *act.Data
 	userData   user.Data
 }
 
@@ -131,21 +130,18 @@ func HTTPStartServer(port uint16, userManager *user.Manager, actManager *act.Man
 				log.Println("Error when retreiving previous encounter", encounterID, "for user", userData.ID, ",", err)
 				return
 			}
-			sendEncounterData(ws, previousEncounter)
+			sendInitData(ws, &previousEncounter)
 		} else {
 			// get act data from web ID
 			actData := actManager.GetDataWithWebID(webID)
-			// relay most current act encounter data
-			if actData != nil && actData.Encounter.ID != 0 {
-				sendEncounterData(ws, *actData)
-			}
+			// send init data
+			sendInitData(ws, actData)
 		}
 		// add websocket connection to global list
 		websocketConnections = append(
 			websocketConnections,
 			websocketConnection{
 				connection: ws,
-				actData:    actData,
 				userData:   userData,
 			},
 		)
@@ -324,7 +320,7 @@ func globalWsWriter(websocketConnections *[]websocketConnection, events *emitter
 		}
 		for event := range events.On("act:*") {
 			for _, websocketConnection := range *websocketConnections {
-				if websocketConnection.connection == nil || websocketConnection.actData == nil || event.Args[0] != websocketConnection.userData.ID {
+				if websocketConnection.connection == nil || event.Args[0] != websocketConnection.userData.ID {
 					continue
 				}
 				websocket.Message.Send(
@@ -367,26 +363,32 @@ func getWebKeyCookie(user user.Data, r *http.Request) http.Cookie {
 	}
 }
 
-func sendEncounterData(ws *websocket.Conn, data act.Data) {
-	encounterIDString := base36.Encode(uint64(data.Encounter.ID))
-	// compress+send encounter data
-	log.Println("Send encounter", encounterIDString, "(Count:", len(data.Combatants), ")")
-	cEncounterData, err := act.CompressBytes(act.EncodeEncounterBytes(&data.Encounter))
+// sendInitData - Send initial data to web user to sync their session
+func sendInitData(ws *websocket.Conn, data *act.Data) {
+	// prepare data
+	dataBytes := make([]byte, 0)
+	// send encounter
+	if data != nil && data.Encounter.ID != 0 {
+		encounterIDString := base36.Encode(uint64(data.Encounter.ID))
+		log.Println("Send encounter data for", encounterIDString, "(TotalCombatants:", len(data.Combatants), ")")
+		// add encounter
+		dataBytes = append(dataBytes, act.EncodeEncounterBytes(&data.Encounter)...)
+		// add combatants
+		for _, combatant := range data.Combatants {
+			dataBytes = append(dataBytes, act.EncodeCombatantBytes(&combatant)...)
+		}
+	}
+	// add flag indicating if ACT is active
+	isActiveFlag := act.Flag{
+		Name:  "active",
+		Value: data != nil && data.IsActive(),
+	}
+	dataBytes = append(dataBytes, act.EncodeFlagBytes(&isActiveFlag)...)
+	// compress
+	compressData, err := act.CompressBytes(dataBytes)
 	if err != nil {
-		log.Println("Error when compressing encounter data,", err)
+		log.Println("Error when compressing init data,", err)
 		return
 	}
-	websocket.Message.Send(ws, cEncounterData)
-	// compress+send combatant data
-	log.Println("Send combatants for encounter", encounterIDString, "(Count:", len(data.Combatants), ")")
-	combatantBytes := make([]byte, 0)
-	for _, combatant := range data.Combatants {
-		combatantBytes = append(combatantBytes, act.EncodeCombatantBytes(&combatant)...)
-	}
-	cCombatantData, err := act.CompressBytes(combatantBytes)
-	if err != nil {
-		log.Println("Error when compressing combatant data,", err)
-		return
-	}
-	websocket.Message.Send(ws, cCombatantData)
+	websocket.Message.Send(ws, compressData)
 }
