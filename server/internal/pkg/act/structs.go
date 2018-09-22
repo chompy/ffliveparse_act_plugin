@@ -14,9 +14,6 @@ const DataTypeEncounter byte = 2
 // DataTypeCombatant - Data type, combatant data
 const DataTypeCombatant byte = 3
 
-// DataTypeCombatAction - Data type, combat action
-const DataTypeCombatAction byte = 4
-
 // DataTypeLogLine - Data type, log line
 const DataTypeLogLine byte = 5
 
@@ -43,20 +40,6 @@ type Encounter struct {
 	Damage       int32
 	Active       bool
 	SuccessLevel uint8
-}
-
-// CombatAction - Data about a specfic action
-type CombatAction struct {
-	EncounterID int32
-	Time        time.Time
-	Sort        int32
-	Attacker    string
-	Victim      string
-	Damage      int32
-	Skill       string
-	SkillType   string
-	SwingType   uint8
-	Critical    bool
 }
 
 // LogLine - Log line from Act

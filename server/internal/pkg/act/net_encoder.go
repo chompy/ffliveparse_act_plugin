@@ -1,6 +1,8 @@
 package act
 
 import (
+	"bytes"
+	"compress/gzip"
 	"encoding/binary"
 	"time"
 )
@@ -72,23 +74,6 @@ func EncodeCombatantBytes(value *Combatant) []byte {
 	return data
 }
 
-// EncodeCombatActionBytes - Create CombatAction byte array
-func EncodeCombatActionBytes(value *CombatAction) []byte {
-	data := make([]byte, 1)
-	data[0] = DataTypeCombatAction
-	writeInt32(&data, value.EncounterID)
-	writeTime(&data, value.Time)
-	writeInt32(&data, value.Sort)
-	writeString(&data, value.Attacker)
-	writeString(&data, value.Victim)
-	writeInt32(&data, value.Damage)
-	writeString(&data, value.Skill)
-	writeString(&data, value.SkillType)
-	writeByte(&data, value.SwingType)
-	writeBool(&data, value.Critical)
-	return data
-}
-
 // EncodeLogLineBytes - Create LogLine byte array
 func EncodeLogLineBytes(value *LogLine) []byte {
 	data := make([]byte, 1)
@@ -97,4 +82,20 @@ func EncodeLogLineBytes(value *LogLine) []byte {
 	writeTime(&data, value.Time)
 	writeString(&data, value.LogLine)
 	return data
+}
+
+// CompressBytes - Compress byte array for sending
+func CompressBytes(data []byte) ([]byte, error) {
+	var gzBytes bytes.Buffer
+	gz := gzip.NewWriter(&gzBytes)
+	if _, err := gz.Write(data); err != nil {
+		return []byte{}, err
+	}
+	if err := gz.Flush(); err != nil {
+		return []byte{}, err
+	}
+	if err := gz.Close(); err != nil {
+		return []byte{}, err
+	}
+	return gzBytes.Bytes(), nil
 }

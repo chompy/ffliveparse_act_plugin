@@ -25,6 +25,7 @@ window.addEventListener("load", function(e) {
                 parseMessage(buffer);
             } catch (e) {
                 console.log(">> Error parsing message,", buf2hex(buffer));
+                throw e
             }
         };
         fileReader.readAsArrayBuffer(event.data);

@@ -95,26 +95,6 @@ func DecodeCombatantBytes(data []byte) (Combatant, error) {
 	}, nil
 }
 
-// DecodeCombatActionBytes - Create CombatAction struct from incomming data packet
-func DecodeCombatActionBytes(data []byte) (CombatAction, error) {
-	if data[0] != DataTypeCombatAction {
-		return CombatAction{}, errors.New("invalid data type for CombatAction")
-	}
-	pos := 1
-	return CombatAction{
-		EncounterID: readInt32(data, &pos),
-		Time:        readTime(data, &pos),
-		Sort:        readInt32(data, &pos),
-		Attacker:    readString(data, &pos),
-		Victim:      readString(data, &pos),
-		Damage:      readInt32(data, &pos),
-		Skill:       readString(data, &pos),
-		SkillType:   readString(data, &pos),
-		SwingType:   readByte(data, &pos),
-		Critical:    readByte(data, &pos) != 0,
-	}, nil
-}
-
 // DecodeLogLineBytes - Create LogLine struct from incomming data packet
 func DecodeLogLineBytes(data []byte) (LogLine, error) {
 	if data[0] != DataTypeLogLine {

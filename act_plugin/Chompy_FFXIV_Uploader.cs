@@ -153,7 +153,7 @@ namespace ACT_Plugin
 
         void oFormActMain_AfterCombatAction(bool isImport, CombatActionEventArgs actionInfo)
         {
-            sendCombatActionData(actionInfo);
+            sendCombatData(actionInfo);
         }
 
         void oFormActMain_OnLogLineRead(bool isImport, LogLineEventArgs logInfo)
@@ -242,31 +242,16 @@ namespace ACT_Plugin
             sendUdp(ref sendData);
         }
 
-        void sendCombatActionData(CombatActionEventArgs actionInfo)
+        void sendCombatData(CombatActionEventArgs actionInfo)
         {
             if (actionInfo.cancelAction) {
                 return;
             }
             // get encounter
             EncounterData encounter = actionInfo.combatAction.ParentEncounter;
-            // build send data
-            List<Byte> sendData = new List<Byte>();
-            sendData.Add(DATA_TYPE_COMBAT_ACTION);                         // declare data type
-            prepareInt32(ref sendData, encounter.StartTime.GetHashCode()); // encounter id
-            prepareDateTime(ref sendData, actionInfo.time);                // time
-            prepareInt32(ref sendData, actionInfo.timeSorter);             // sort for items with same time
-            prepareString(ref sendData, actionInfo.attacker);              // attacker name
-            prepareString(ref sendData, actionInfo.victim);                // victim name
-            prepareInt32(ref sendData, (Int32) actionInfo.damage);         // damage number
-            prepareString(ref sendData, actionInfo.theAttackType);         // skill name
-            prepareString(ref sendData, actionInfo.theDamageType);         // skill type
-            sendData.Add((byte) actionInfo.swingType);                     // "swing type"
-            sendData.Add((byte) (actionInfo.critical ? 1 : 0));            // was critical
-            // send
-            sendUdp(ref sendData);
             // send encounter data
             sendEncounterData(encounter);
-            // check if action data is ally action, if so send updated combatant data
+            // send combatant data
             foreach (CombatantData cd in encounter.GetAllies()) {
                 if (cd.Name == actionInfo.attacker) {
                     sendEncounterCombatantData(cd);

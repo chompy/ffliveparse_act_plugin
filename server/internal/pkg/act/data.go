@@ -12,13 +12,11 @@ import (
 
 // Data - data about an ACT session
 type Data struct {
-	Session       Session
-	User          user.Data
-	Encounter     Encounter
-	Combatants    []Combatant
-	CombatActions []CombatAction
-	LogLines      []LogLine
-	database      *sql.DB
+	Session    Session
+	User       user.Data
+	Encounter  Encounter
+	Combatants []Combatant
+	LogLines   []LogLine
 }
 
 // NewData - create new ACT session data
@@ -31,13 +29,12 @@ func NewData(session Session, user user.Data) (Data, error) {
 	if err != nil {
 		return Data{}, err
 	}
+	database.Close()
 	return Data{
-		Session:       session,
-		User:          user,
-		Encounter:     Encounter{ID: 0},
-		Combatants:    make([]Combatant, 0),
-		CombatActions: make([]CombatAction, 0),
-		database:      database,
+		Session:    session,
+		User:       user,
+		Encounter:  Encounter{ID: 0},
+		Combatants: make([]Combatant, 0),
 	}, nil
 }
 
@@ -82,23 +79,6 @@ func (d *Data) UpdateCombatant(combatant Combatant) {
 	// add new
 	d.Combatants = append(d.Combatants, combatant)
 	log.Println("Add combatant", combatant.Name, "to encounter", combatant.EncounterID, "(TotalCombatants:", len(d.Combatants), ")")
-}
-
-// UpdateCombatAction - Add combat action
-func (d *Data) UpdateCombatAction(combatAction CombatAction) {
-	// ensure there is a current encounter and that data is for it
-	if combatAction.EncounterID == 0 || d.Encounter.ID == 0 || combatAction.EncounterID != d.Encounter.ID {
-		return
-	}
-	// look for existing
-	for index, storedCombatAction := range d.CombatActions {
-		if storedCombatAction.Time == combatAction.Time && storedCombatAction.Sort == combatAction.Sort {
-			d.CombatActions[index] = combatAction
-			return
-		}
-	}
-	// add
-	d.CombatActions = append(d.CombatActions, combatAction)
 }
 
 // UpdateLogLine - Add log line
@@ -166,31 +146,6 @@ func initDatabase(database *sql.DB) error {
 	if err != nil {
 		return err
 	}
-	// create combat action table if not exist
-	stmt, err = database.Prepare(`
-		CREATE TABLE IF NOT EXISTS combat_action
-		(
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			encounter_id INTEGER,
-			time DATETIME,
-			sort INTEGER,
-			attacker VARCHAR(256),
-			victim VARCHAR(256),
-			damage INTEGER,
-			skill VARCHAR(256),
-			skill_type VARCHAR(256),
-			swing_type INTEGER,
-			critical INTEGER,
-			CONSTRAINT encounter_unique UNIQUE (encounter_id, time, sort)
-		)
-	`)
-	if err != nil {
-		return err
-	}
-	_, err = stmt.Exec()
-	if err != nil {
-		return err
-	}
 	return nil
 }
 
@@ -200,8 +155,14 @@ func (d *Data) SaveEncounter() error {
 	if d.Encounter.ID == 0 {
 		return nil
 	}
+	// get database
+	database, err := getDatabase(d.User)
+	if err != nil {
+		return err
+	}
+	defer database.Close()
 	// insert in to encounter table
-	stmt, err := d.database.Prepare(`
+	stmt, err := database.Prepare(`
 		INSERT OR REPLACE INTO encounter
 		(id, start_time, end_time, zone, damage, success_level) VALUES
 		(?, ?, ?, ?, ?, ?)
@@ -220,9 +181,10 @@ func (d *Data) SaveEncounter() error {
 	if err != nil {
 		return err
 	}
+	stmt.Close()
 	// insert in to combatant table
 	for _, combatant := range d.Combatants {
-		stmt, err := d.database.Prepare(`
+		stmt, err := database.Prepare(`
 			INSERT OR REPLACE INTO combatant
 			(encounter_id, name, job, damage, damage_taken, damage_healed, deaths, hits, heals, kills) VALUES
 			(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -245,32 +207,7 @@ func (d *Data) SaveEncounter() error {
 		if err != nil {
 			return err
 		}
-	}
-	// insert in to combat action table
-	for _, combatAction := range d.CombatActions {
-		stmt, err := d.database.Prepare(`
-			INSERT OR REPLACE INTO combat_action
-			(encounter_id, time, sort, attacker, victim, damage, skill, skill_type, swing_type, critical) VALUES
-			(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)			
-		`)
-		if err != nil {
-			return err
-		}
-		_, err = stmt.Exec(
-			combatAction.EncounterID,
-			combatAction.Time,
-			combatAction.Sort,
-			combatAction.Attacker,
-			combatAction.Victim,
-			combatAction.Damage,
-			combatAction.Skill,
-			combatAction.SkillType,
-			combatAction.SwingType,
-			combatAction.Critical,
-		)
-		if err != nil {
-			return err
-		}
+		stmt.Close()
 	}
 	return nil
 }
@@ -279,7 +216,6 @@ func (d *Data) SaveEncounter() error {
 func (d *Data) ClearEncounter() {
 	d.Encounter = Encounter{ID: 0}
 	d.Combatants = make([]Combatant, 0)
-	d.CombatActions = make([]CombatAction, 0)
 }
 
 // GetPreviousEncounter - retrieve previous encounter data from database
@@ -313,6 +249,7 @@ func GetPreviousEncounter(user user.Data, encounterID int32) (Data, error) {
 		}
 		break
 	}
+	rows.Close()
 	// fetch combatants
 	rows, err = database.Query(
 		"SELECT encounter_id, name, job, damage, damage_taken, damage_healed, deaths, hits, heals, kills FROM combatant WHERE encounter_id = ?",
@@ -341,39 +278,11 @@ func GetPreviousEncounter(user user.Data, encounterID int32) (Data, error) {
 		}
 		combatants = append(combatants, combatant)
 	}
-	// fetch combat actions
-	rows, err = database.Query(
-		"SELECT encounter_id, time, sort, attacker, victim, damage, skill, skill_type, swing_type, critical FROM combat_action WHERE encounter_id = ?",
-		encounterID,
-	)
-	if err != nil {
-		return Data{}, err
-	}
-	combatActions := make([]CombatAction, 0)
-	for rows.Next() {
-		combatAction := CombatAction{}
-		err := rows.Scan(
-			&combatAction.EncounterID,
-			&combatAction.Time,
-			&combatAction.Sort,
-			&combatAction.Attacker,
-			&combatAction.Victim,
-			&combatAction.Damage,
-			&combatAction.Skill,
-			&combatAction.SkillType,
-			&combatAction.SwingType,
-			&combatAction.Critical,
-		)
-		if err != nil {
-			return Data{}, err
-		}
-		combatActions = append(combatActions, combatAction)
-	}
+	rows.Close()
 	// return data set
 	return Data{
-		User:          user,
-		Encounter:     encounter,
-		Combatants:    combatants,
-		CombatActions: combatActions,
+		User:       user,
+		Encounter:  encounter,
+		Combatants: combatants,
 	}, nil
 }

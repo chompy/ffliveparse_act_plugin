@@ -152,6 +152,8 @@ function decodeLogLineBytes(data)
 function parseMessage(data)
 {
     totalBytesRecieved += data.length;
+    // decompress
+    data = pako.inflate(data)
     var pos = 0;
     while (pos < data.length) {
         var length = 0;

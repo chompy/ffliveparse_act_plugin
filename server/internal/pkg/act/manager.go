@@ -148,50 +148,6 @@ func (m *Manager) ParseDataString(dataStr []byte, addr *net.UDPAddr) (*Data, err
 				")",
 			)
 		}
-	case DataTypeCombatAction:
-		{
-			// data required
-			if dataObj == nil {
-				return nil, errors.New("recieved CombatAction with no matching data object")
-			}
-			// parse combat action data
-			combatAction, err := DecodeCombatActionBytes(dataStr)
-			if err != nil {
-				return nil, err
-			}
-			// add combat action
-			dataObj.UpdateCombatAction(combatAction)
-			// forward data to web
-			// ignore for now, not sure we need this
-			/*go m.events.Emit(
-				"act:combatAction",
-				EncodeCombatActionBytes(&combatAction),
-			)*/
-			// log
-			log.Println(
-				"Combat action for encounter",
-				base36.Encode(uint64(uint32(combatAction.EncounterID))),
-				",",
-				combatAction.Attacker,
-				"used",
-				combatAction.Skill,
-				"on",
-				combatAction.Victim,
-				"for",
-				combatAction.Damage,
-				"(UserID:",
-				dataObj.User.ID,
-				", SkillType:",
-				combatAction.SkillType,
-				", Critical:",
-				combatAction.Critical,
-				", SwingType:",
-				combatAction.SwingType,
-				", TotalCombatActions:",
-				len(dataObj.CombatActions),
-				")",
-			)
-		}
 	case DataTypeLogLine:
 		{
 			// data required
@@ -244,11 +200,16 @@ func (m *Manager) doTick(data *Data) {
 		if !m.newTickData {
 			continue
 		}
-		// emit encounter event
+		// gz compress encounter data and emit event
+		compressData, err := CompressBytes(EncodeEncounterBytes(&data.Encounter))
+		if err != nil {
+			log.Println("Error while compressing encounter data,", err)
+			continue
+		}
 		go m.events.Emit(
 			"act:encounter",
 			data.User.ID,
-			EncodeEncounterBytes(&data.Encounter),
+			compressData,
 		)
 		// emit combatant events
 		sendBytes := make([]byte, 0)
@@ -256,10 +217,15 @@ func (m *Manager) doTick(data *Data) {
 			sendBytes = append(sendBytes, EncodeCombatantBytes(&combatant)...)
 		}
 		if len(sendBytes) > 0 {
+			compressData, err := CompressBytes(sendBytes)
+			if err != nil {
+				log.Println("Error while compressing combatant data,", err)
+				continue
+			}
 			go m.events.Emit(
 				"act:combatant",
 				data.User.ID,
-				sendBytes,
+				compressData,
 			)
 		}
 	}
@@ -280,10 +246,15 @@ func (m *Manager) doLogTick(data *Data) {
 			sendBytes = append(sendBytes, EncodeLogLineBytes(&logLine)...)
 		}
 		if len(sendBytes) > 0 {
+			compressData, err := CompressBytes(sendBytes)
+			if err != nil {
+				log.Println("Error while compressing log line data,", err)
+				continue
+			}
 			go m.events.Emit(
 				"act:logLine",
 				data.User.ID,
-				sendBytes,
+				compressData,
 			)
 		}
 		// clear log line buffer

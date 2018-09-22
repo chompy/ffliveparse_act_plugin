@@ -128,29 +128,16 @@ func HTTPStartServer(port uint16, userManager *user.Manager, actManager *act.Man
 			log.Println("Load previous encounter data (EncounterID:", encounterID, ", UserID:", userData.ID, ")")
 			previousEncounter, err := act.GetPreviousEncounter(userData, encounterIDInt)
 			if err != nil {
-				log.Println("Error when attempt to retreive previous encounter", encounterID, "for user", userData.ID, ",", err)
+				log.Println("Error when retreiving previous encounter", encounterID, "for user", userData.ID, ",", err)
 				return
 			}
-			websocket.Message.Send(ws, act.EncodeEncounterBytes(&previousEncounter.Encounter))
-			log.Println("Send combatants for encounter", encounterID, "(Count:", len(previousEncounter.Combatants), ")")
-			for _, combatant := range previousEncounter.Combatants {
-				websocket.Message.Send(ws, act.EncodeCombatantBytes(&combatant))
-			}
-			/*for _, combatAction := range previousEncounter.CombatActions {
-				websocket.Message.Send(ws, act.EncodeCombatActionBytes(&combatAction))
-			}*/
+			sendEncounterData(ws, previousEncounter)
 		} else {
 			// get act data from web ID
 			actData := actManager.GetDataWithWebID(webID)
 			// relay most current act encounter data
 			if actData != nil && actData.Encounter.ID != 0 {
-				websocket.Message.Send(ws, act.EncodeEncounterBytes(&actData.Encounter))
-				for _, combatant := range actData.Combatants {
-					websocket.Message.Send(ws, act.EncodeCombatantBytes(&combatant))
-				}
-				/*for _, combatAction := range actData.CombatActions {
-					websocket.Message.Send(ws, act.EncodeCombatActionBytes(&combatAction))
-				}*/
+				sendEncounterData(ws, *actData)
 			}
 		}
 		// add websocket connection to global list
@@ -378,4 +365,28 @@ func getWebKeyCookie(user user.Data, r *http.Request) http.Cookie {
 		Expires: time.Now().Add(365 * 24 * time.Hour),
 		Domain:  r.URL.Hostname(),
 	}
+}
+
+func sendEncounterData(ws *websocket.Conn, data act.Data) {
+	encounterIDString := base36.Encode(uint64(data.Encounter.ID))
+	// compress+send encounter data
+	log.Println("Send encounter", encounterIDString, "(Count:", len(data.Combatants), ")")
+	cEncounterData, err := act.CompressBytes(act.EncodeEncounterBytes(&data.Encounter))
+	if err != nil {
+		log.Println("Error when compressing encounter data,", err)
+		return
+	}
+	websocket.Message.Send(ws, cEncounterData)
+	// compress+send combatant data
+	log.Println("Send combatants for encounter", encounterIDString, "(Count:", len(data.Combatants), ")")
+	combatantBytes := make([]byte, 0)
+	for _, combatant := range data.Combatants {
+		combatantBytes = append(combatantBytes, act.EncodeCombatantBytes(&combatant)...)
+	}
+	cCombatantData, err := act.CompressBytes(combatantBytes)
+	if err != nil {
+		log.Println("Error when compressing combatant data,", err)
+		return
+	}
+	websocket.Message.Send(ws, cCombatantData)
 }
