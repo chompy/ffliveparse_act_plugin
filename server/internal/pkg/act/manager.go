@@ -52,6 +52,14 @@ func (m *Manager) ParseDataString(dataStr []byte, addr *net.UDPAddr) (*Data, err
 				if err != nil {
 					return nil, err
 				}
+				// check for existing data
+				for index, existingData := range m.data {
+					if existingData.User.ID == user.ID {
+						m.data[index].Session = session
+						log.Println("Updated ACT session for user", existingData.User.ID, "from", addr, "(LoadedDataCount:", len(m.data), ")")
+						return &m.data[index], nil
+					}
+				}
 				// create new data
 				actData, err := NewData(session, user)
 				if err != nil {
