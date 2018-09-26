@@ -134,8 +134,6 @@ class WidgetCactbotRaidboss extends WidgetBase
     {
         if (this.activeTimeline) {
             this.activeTimeline.Stop();
-            delete this.activeTimeline;
-            this.activeTimeline = null;
             this.activeTriggers = [];
         }
         this.getBodyElement().getElementsByClassName("cactbotTimerContainer")[0].innerHTML = "";
@@ -396,7 +394,7 @@ class WidgetCactbotRaidboss extends WidgetBase
         this.reset();
 
         // TEST
-        //this.zoneName = "Sigmascape V1.0 (Savage)";
+        //this.zoneName = "Hells' Kier (Extreme)";
 
         var t = this;
         // load start/end regexs
@@ -449,14 +447,14 @@ class WidgetCactbotRaidboss extends WidgetBase
                 });
 
                 // TEST
-                /*this.activeTimeline.OnLogLine(":Engage!");
-                setTimeout(
+                this.activeTimeline.OnLogLine("0044:Tenzen");
+                /*setTimeout(
                     function() {
-                        t._onLogLine({"detail" : {"LogLine" : "14:28B1:Phantom Train starts using Doom Strike on Minda Silva", "EncounterID" : this.encounterId}});
+                        t._onLogLine({"detail" : {"LogLine" : " 14:32D1:Suzaku starts using Cremate on Minda Silva", "EncounterID" : this.encounterId}});
                     },
                     1000
-                )
-                setTimeout(
+                )*/
+                /*setTimeout(
                     function() {
                         t._onLogLine({"detail" : {"LogLine" : "14:28B1:Phantom Train starts using Doom Strike on Minda Silva", "EncounterID" : this.encounterID}});
                     },
