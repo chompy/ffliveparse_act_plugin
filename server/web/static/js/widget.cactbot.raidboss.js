@@ -301,7 +301,7 @@ class WidgetCactbotRaidboss extends WidgetBase
      */
     _onLogLine(event)
     {
-        if (!this.ready || !this.activeTimeline || event.detail.EncounterID != this.encounterId) {
+        if (!this.ready || !this.activeTimeline) {
             return;
         }
         // check for 'start' event
