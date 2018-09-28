@@ -1,4 +1,21 @@
-﻿using System;
+﻿/*
+This file is part of FFLiveParse.
+
+FFLiveParse is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+FFLiveParse is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with FFLiveParse.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
+using System;
 using System.IO;
 using System.Text;
 using System.Collections.Generic;
@@ -7,14 +24,14 @@ using System.Reflection;
 using System.Net.Sockets;
 using Advanced_Combat_Tracker;
 
-[assembly: AssemblyTitle("Chompy FFXIV Parse Uploader")]
+[assembly: AssemblyTitle("FFLiveParse Uploader")]
 [assembly: AssemblyDescription("Provides real time parse upload that can be shared with other via the web.")]
 [assembly: AssemblyCompany("Nathan Ogden")]
 [assembly: AssemblyVersion("0.0.1")]
 
 namespace ACT_Plugin
 {
-    public class Chompy_FFXIV_Uploader : UserControl, IActPluginV1
+    public class FFLiveParseUploader : UserControl, IActPluginV1
     {
 
         const string DEFAULT_REMOTE_HOST = "ffxiv.chompy.me";   // Default remote host name to send data to
@@ -32,7 +49,7 @@ namespace ACT_Plugin
 
         private string settingFilePath = Path.Combine(
             ActGlobals.oFormActMain.AppDataFolder.FullName,
-            "Config\\Chompy_FFXIV_Uploader.config.dat"
+            "Config\\FFLiveParseUploader.config.dat"
         );
 
         private Label lblStatus;                                // The status label that appears in ACT's Plugin tab
@@ -48,7 +65,7 @@ namespace ACT_Plugin
         private Button buttonSave;                              // form button to save settings
 
 
-        public Chompy_FFXIV_Uploader()
+        public FFLiveParseUploader()
         {
 			this.labelPrivateKey = new System.Windows.Forms.Label();
 			this.textboxPrivateKey = new System.Windows.Forms.TextBox();
@@ -96,7 +113,7 @@ namespace ACT_Plugin
             this.Controls.Add(this.textboxHost);
             this.Controls.Add(this.labelHost);
             this.Controls.Add(this.buttonSave);
-			this.Name = "Chompy_FFXIV_Uploader";
+			this.Name = "FFLiveParse Uploader";
 			this.Size = new System.Drawing.Size(686, 384);
 			this.ResumeLayout(false);
 			this.PerformLayout();
