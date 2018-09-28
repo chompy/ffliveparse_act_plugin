@@ -303,7 +303,7 @@ class WidgetCactbotRaidboss extends WidgetBase
             return;
         }
         // check for 'start' event
-        if (this.startRegexs && this.activeTimeline.timebase <= 0) {
+        /*if (this.startRegexs && this.activeTimeline.timebase <= 0) {
             for (var i in this.startRegexs) {
                 if (event.detail.LogLine.match(this.startRegexs[i])) {
                     this.activeTimeline.SyncTo(1);
@@ -319,7 +319,7 @@ class WidgetCactbotRaidboss extends WidgetBase
                     return;
                 }
             }
-        }
+        }*/
         // push log line to active timeline
         this.activeTimeline.OnLogLine(event.detail.LogLine);
         // process triggers
@@ -351,9 +351,9 @@ class WidgetCactbotRaidboss extends WidgetBase
     _onCombatant(event)
     {
         // combatant data not for current encounter
-        if (event.detail.EncounterID != this.encounterId) {
+        /*if (event.detail.EncounterID != this.encounterId) {
             return;
-        }
+        }*/
         // new player data
         if (
             this.userConfig["characterName"] && 
@@ -394,7 +394,7 @@ class WidgetCactbotRaidboss extends WidgetBase
         this.reset();
 
         // TEST
-        //this.zoneName = "Hells' Kier (Extreme)";
+        //this.zoneName = "Alphascape V2.0 (Savage)";
 
         var t = this;
         // load start/end regexs
@@ -447,16 +447,16 @@ class WidgetCactbotRaidboss extends WidgetBase
                 });
 
                 // TEST
-                this.activeTimeline.OnLogLine("0044:Tenzen");
-                /*setTimeout(
+                /*this.activeTimeline.OnLogLine("0044:I am Midgardsormr");
+                setTimeout(
                     function() {
-                        t._onLogLine({"detail" : {"LogLine" : " 14:32D1:Suzaku starts using Cremate on Minda Silva", "EncounterID" : this.encounterId}});
+                        t._onLogLine({"detail" : {"LogLine" : "15:40006EB8:Midgardsormr:31AC:", "EncounterID" : this.encounterId}});
                     },
                     1000
-                )*/
-                /*setTimeout(
+                )
+                setTimeout(
                     function() {
-                        t._onLogLine({"detail" : {"LogLine" : "14:28B1:Phantom Train starts using Doom Strike on Minda Silva", "EncounterID" : this.encounterID}});
+                        t._onLogLine({"detail" : {"LogLine" : "15:40006EB8:Midgardsormr:31AE:", "EncounterID" : this.encounterId}});
                     },
                     3000
                 )*/
