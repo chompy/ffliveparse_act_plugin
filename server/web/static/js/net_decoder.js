@@ -12,20 +12,17 @@ var totalBytesRecieved= 0;
 
 function readInt32(data, pos)
 {
-    var buf = data.slice(pos, pos+SIZE_INT32);
-    return new DataView(buf.buffer).getInt32()
+    return new DataView(data.buffer, pos, SIZE_INT32).getInt32(0)
 }
 
 function readUint32(data, pos)
 {
-    var buf = data.slice(pos, pos+SIZE_INT32);
-    return new DataView(buf.buffer).getUint32()
+    return new DataView(data.buffer, pos, SIZE_INT32).getUint32(0)
 }
 
 function readUint16(data, pos)
 {
-    var buf = data.slice(pos, pos+SIZE_INT16);
-    return new DataView(buf.buffer).getUint16()
+    return new DataView(data.buffer, pos, SIZE_INT16).getUint16(0)
 }
 
 function readByte(data, pos)
