@@ -79,7 +79,7 @@ namespace ACT_Plugin
 			this.labelPrivateKey.Name = "labelPrivateKey";
 			this.labelPrivateKey.Size = new System.Drawing.Size(434, 13);
 			this.labelPrivateKey.TabIndex = 0;
-			this.labelPrivateKey.Text = "Private Key (Copy this from the website.)";
+			this.labelPrivateKey.Text = "Upload Key (Copy this from the website.)";
 			// textbox - private key
 			this.textboxPrivateKey.Location = new System.Drawing.Point(8, 24);
 			this.textboxPrivateKey.Name = "textboxPrivateKey";
@@ -192,7 +192,7 @@ namespace ACT_Plugin
                 return;
             }
             if (string.IsNullOrEmpty(this.privateKey)) {
-                lblStatus.Text = "ERROR: Private key is not set.";
+                lblStatus.Text = "ERROR: Upload key is not set.";
                 return;                
             }
             try {
