@@ -9,6 +9,7 @@ class WidgetTrigger extends WidgetBase
         super();
         this.currentZone = "";
         this.logLineCount = 0;
+        this.updateTriggerDetailsTimeout = null;
         if (!("triggers" in this.userConfig)) {
             this.userConfig["triggers"] = [];
             this._saveUserConfig()
@@ -57,7 +58,7 @@ class WidgetTrigger extends WidgetBase
         // hook events
         var t = this;
         this.addEventListener("act:encounter", function(e) { t._processEncounter(e); });
-        this.addEventListener("act:logLiner", function(e) { t._processLogLine(e); });
+        this.addEventListener("act:logLine", function(e) { t._processLogLine(e); });
         // display trigger details
         this._updateTriggerDetails();
     }
@@ -65,8 +66,12 @@ class WidgetTrigger extends WidgetBase
     remove()
     {
         super.remove();
+        if (this.updateTriggerDetailsTimeout) {
+            clearTimeout(this.updateTriggerDetailsTimeout);
+        }
         this.currentZone = "";
         this.logLineCount = 0;
+        this.updateTriggerDetailsTimeout = null
     }
     
     showOptionHelp()
@@ -256,6 +261,9 @@ class WidgetTrigger extends WidgetBase
      */
     _updateTriggerDetails()
     {
+        if (this.updateTriggerDetailsTimeout) {
+            clearTimeout(this.updateTriggerDetailsTimeout);
+        }
         var triggerMessage = "";
         triggerMessage += this.userConfig["triggers"].length;
         triggerMessage += " trigger(s) available. ";
@@ -264,7 +272,7 @@ class WidgetTrigger extends WidgetBase
         this.getBodyElement().getElementsByClassName("triggerDetails")[0].innerText = triggerMessage;
         // run this every 5 seconds
         var t = this;
-        setTimeout(function() { t._updateTriggerDetails(); }, 5000);
+        this.updateTriggerDetailsTimeout = setTimeout(function() { t._updateTriggerDetails(); }, 5000);
     }
 
 }

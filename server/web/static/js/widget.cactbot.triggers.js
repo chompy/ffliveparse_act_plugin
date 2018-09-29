@@ -86,7 +86,7 @@ class WidgetCactbotTriggers extends WidgetBase
         this._fetchData();
         // hook events
         var t = this;
-        this.addEventListener("act:logLiner", function(e) { t._onLogLine(e); });
+        this.addEventListener("act:logLine", function(e) { t._onLogLine(e); });
         this.addEventListener("act:combatant", function(e) { t._onCombatant(e); });
         this.addEventListener("act:encounter", function(e) { t._onEncounter(e); });
     }
