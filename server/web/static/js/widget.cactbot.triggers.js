@@ -86,9 +86,20 @@ class WidgetCactbotTriggers extends WidgetBase
         this._fetchData();
         // hook events
         var t = this;
-        window.addEventListener("act:logLine", function(e) { t._onLogLine(e); });
-        window.addEventListener("act:combatant", function(e) { t._onCombatant(e); });
-        window.addEventListener("act:encounter", function(e) { t._onEncounter(e); });
+        this.addEventListener("act:logLiner", function(e) { t._onLogLine(e); });
+        this.addEventListener("act:combatant", function(e) { t._onCombatant(e); });
+        this.addEventListener("act:encounter", function(e) { t._onEncounter(e); });
+    }
+
+    remove()
+    {
+        super.remove();
+        this.currentZone = "";
+        this.data = null;
+        this.activeTriggers = [];
+        this.delayTriggers = [];
+        this.alertClearTimeout = null;
+        this.playerData = null;
     }
     
     showOptionHelp()

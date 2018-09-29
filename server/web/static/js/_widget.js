@@ -34,6 +34,7 @@ class WidgetBase
     constructor()
     {
         this.element = null;
+        this.eventListenerCallbacks = {};
         this.userConfig = {};
         this._loadUserConfig();
     }
@@ -148,6 +149,51 @@ class WidgetBase
     {
         this.element = this.buildElement()
         document.getElementById(WIDGET_ELEMENT_ID).appendChild(this.element);
+    }
+
+    /**
+     * Remove widget.
+     */
+    remove()
+    {
+        this.removeAllEventListeners();
+        if (this.element) {
+            this.element.remove();
+        }
+    }
+
+    /**
+     * Add an event listener, store callback so that
+     * it can be removed later.
+     * @param {string} event 
+     * @param {function} callback 
+     */
+    addEventListener(event, callback)
+    {
+        if (!(event in this.eventListenerCallbacks)) {
+            this.eventListenerCallbacks[event] = [];
+        }
+        this.eventListenerCallbacks[event].push(callback);
+        window.addEventListener(
+            event,
+            callback
+        );
+    }
+
+    /**
+     * Remove all event listeners added with 'addEventListener.'
+     */
+    removeAllEventListeners()
+    {
+        for (var event in this.eventListenerCallbacks) {
+            for (var i in this.eventListenerCallbacks[event]) {
+                window.removeEventListener(
+                    event,
+                    this.eventListenerCallbacks[event][i]
+                );
+            }
+        }
+        this.eventListenerCallbacks = {};
     }
 
     /**

@@ -56,10 +56,17 @@ class WidgetTrigger extends WidgetBase
         bodyElement.appendChild(triggerContainerElement);
         // hook events
         var t = this;
-        window.addEventListener("act:logLine", function(e) { t._processLogLine(e); });
-        window.addEventListener("act:encounter", function(e) { t._processEncounter(e); });
+        this.addEventListener("act:encounter", function(e) { t._processEncounter(e); });
+        this.addEventListener("act:logLiner", function(e) { t._processLogLine(e); });
         // display trigger details
         this._updateTriggerDetails();
+    }
+
+    remove()
+    {
+        super.remove();
+        this.currentZone = "";
+        this.logLineCount = 0;
     }
     
     showOptionHelp()

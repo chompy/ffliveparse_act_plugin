@@ -104,8 +104,17 @@ class WidgetParse extends WidgetBase
         this.reset();
         // hook events
         var t = this;
-        window.addEventListener("act:encounter", function(e) { t._updateEncounter(e); });
-        window.addEventListener("act:combatant", function(e) { t._updateCombatants(e); });
+        this.addEventListener("act:encounter", function(e) { t._updateEncounter(e); });
+        this.addEventListener("act:combatant", function(e) { t._updateCombatants(e); });
+    }
+
+    remove()
+    {
+        super.remove();
+        this.encounterId = null;
+        this.encounterDuration = 0;
+        this.encounterDamage = 0;
+        this.combatants = [];
     }
 
     showOptionHelp()

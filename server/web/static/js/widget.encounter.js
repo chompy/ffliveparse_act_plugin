@@ -12,6 +12,7 @@ class WidgetEncounter extends WidgetBase
         this.offset = 6000;
         this.encounterId = "";
         this.combatants = [];
+        this.tickTimeout = null;
     }
 
     getName()
@@ -62,8 +63,21 @@ class WidgetEncounter extends WidgetBase
         this.reset();
         // hook events
         var t = this;
-        window.addEventListener("act:encounter", function(e) { t._updateEncounter(e); });
+        this.addEventListener("act:encounter", function(e) { t._updateEncounter(e); });
         this._tick();
+    }
+
+    remove()
+    {
+        super.remove();
+        if (this.tickTimeout) {
+            clearTimeout(this.tickTimeout);
+        }
+        this.startTime = null;
+        this.offset = 6000;
+        this.encounterId = "";
+        this.combatants = [];
+        this.tickTimeout = null;
     }
 
     showOptionHelp()
@@ -90,6 +104,10 @@ class WidgetEncounter extends WidgetBase
      */
     _tick()
     {
+        // clear old timeout
+        if (this.tickTimeout) {
+            clearTimeout(this.tickTimeout);
+        }
         // update element
         if (this.startTime) {
             var duration = new Date().getTime() - this.startTime.getTime() + this.offset;
@@ -97,7 +115,7 @@ class WidgetEncounter extends WidgetBase
         }
         // run every second
         var t = this;
-        setTimeout(function() { t._tick(); }, 1000)
+        this.tickTimeout = setTimeout(function() { t._tick(); }, 1000);
     }
 
     /**
