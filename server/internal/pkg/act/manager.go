@@ -21,7 +21,6 @@ type Manager struct {
 	events      *emitter.Emitter
 	userManager *user.Manager
 	devMode     bool
-	newTickData bool
 }
 
 // NewManager - create new act manager
@@ -70,8 +69,8 @@ func (m *Manager) ParseDataString(dataStr []byte, addr *net.UDPAddr) (*Data, err
 					actData,
 				)
 				// start ticks
-				go m.doTick(&m.data[len(m.data)-1])
-				go m.doLogTick(&m.data[len(m.data)-1])
+				go m.doTick(actData.User.ID)
+				go m.doLogTick(actData.User.ID)
 				// save user data, update accessed time
 				m.userManager.Save(user)
 				log.Println("Loaded ACT session for use ", user.ID, "from", addr, "(LoadedDataCount:", len(m.data), ")")
@@ -108,8 +107,6 @@ func (m *Manager) ParseDataString(dataStr []byte, addr *net.UDPAddr) (*Data, err
 			}
 			// update data
 			dataObj.UpdateEncounter(encounter)
-			// flag that new data should be sent next tick
-			m.newTickData = true
 			// log
 			dur := encounter.EndTime.Sub(encounter.StartTime)
 			log.Println(
@@ -144,8 +141,6 @@ func (m *Manager) ParseDataString(dataStr []byte, addr *net.UDPAddr) (*Data, err
 			}
 			// update user data
 			dataObj.UpdateCombatant(combatant)
-			// flag that new data should be sent next tick
-			m.newTickData = true
 			// log
 			log.Println(
 				"Update combatant",
@@ -208,17 +203,21 @@ func (m *Manager) ParseDataString(dataStr []byte, addr *net.UDPAddr) (*Data, err
 }
 
 // doTick - ticks every app.TickRate milliseconds
-func (m *Manager) doTick(data *Data) {
+func (m *Manager) doTick(userID int64) {
 	for range time.Tick(app.TickRate * time.Millisecond) {
+		data := m.GetDataWithUserID(userID)
 		if data == nil {
+			log.Println("Tick with no session data, killing thread.")
 			return
 		}
 		if data.Encounter.ID == 0 {
 			continue
 		}
-		if !m.newTickData {
+		if !data.NewTickData {
 			continue
 		}
+		data.NewTickData = false
+		log.Println("Tick for user", data.User.ID, "send data for encounter", base36.Encode(uint64(uint32(data.Encounter.ID))))
 		// gz compress encounter data and emit event
 		compressData, err := CompressBytes(EncodeEncounterBytes(&data.Encounter))
 		if err != nil {
@@ -251,9 +250,11 @@ func (m *Manager) doTick(data *Data) {
 }
 
 // doLogTick - ticks every app.LogTickRate milliseconds
-func (m *Manager) doLogTick(data *Data) {
+func (m *Manager) doLogTick(userID int64) {
 	for range time.Tick(app.LogTickRate * time.Millisecond) {
+		data := m.GetDataWithUserID(userID)
 		if data == nil {
+			log.Println("Log tick with no session data, killing thread.")
 			return
 		}
 		if len(data.LogLines) == 0 {

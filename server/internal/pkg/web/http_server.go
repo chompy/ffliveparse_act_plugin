@@ -93,7 +93,6 @@ func HTTPStartServer(port uint16, userManager *user.Manager, actManager *act.Man
 	})
 	// setup websocket connections
 	http.Handle("/ws/", websocket.Handler(func(ws *websocket.Conn) {
-		defer ws.Close()
 		// split url path in to parts
 		urlPathParts := strings.Split(strings.TrimLeft(ws.Request().URL.Path, "/"), "/")
 		// need at once web ID to be present in url
@@ -145,6 +144,17 @@ func HTTPStartServer(port uint16, userManager *user.Manager, actManager *act.Man
 				userData:   userData,
 			},
 		)
+		defer func() {
+			for index := range websocketConnections {
+				if websocketConnections[index].connection == ws {
+					log.Println("Close web connection for", ws.RemoteAddr())
+					websocketConnections = append(websocketConnections[:index], websocketConnections[index+1:]...)
+					break
+				}
+			}
+			ws.Close()
+		}()
+
 		// listen/wait for incomming messages
 		wsReader(ws, actManager)
 	}))
@@ -323,6 +333,7 @@ func globalWsWriter(websocketConnections *[]websocketConnection, events *emitter
 				if websocketConnection.connection == nil || event.Args[0] != websocketConnection.userData.ID {
 					continue
 				}
+				log.Println("ACT event", event.OriginalTopic, ", send data for user", websocketConnection.userData.ID, "to", websocketConnection.connection.RemoteAddr())
 				websocket.Message.Send(
 					websocketConnection.connection,
 					event.Args[1],

@@ -128,7 +128,6 @@ namespace ACT_Plugin
             // load settings
             loadSettings();
             // init udp client
-            udpClient = new UdpClient();
             udpConnect();
             // hook events
             ActGlobals.oFormActMain.OnCombatStart += new CombatToggleEventDelegate(oFormActMain_OnCombatStart);
@@ -195,6 +194,10 @@ namespace ACT_Plugin
                 lblStatus.Text = "ERROR: Upload key is not set.";
                 return;                
             }
+            if (udpClient != null) {
+                udpClient.Close();
+            }
+            udpClient = new UdpClient();
             try {
                 udpClient.Connect(this.remoteHost, this.remotePort);
                 // send session data, multiple times to ensure UDP transmission

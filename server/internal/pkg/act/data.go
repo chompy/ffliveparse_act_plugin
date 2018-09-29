@@ -16,12 +16,13 @@ const lastUpdateInactiveTime = 300000
 
 // Data - data about an ACT session
 type Data struct {
-	Session    Session
-	User       user.Data
-	Encounter  Encounter
-	Combatants []Combatant
-	LogLines   []LogLine
-	LastUpdate time.Time
+	Session     Session
+	User        user.Data
+	Encounter   Encounter
+	Combatants  []Combatant
+	LogLines    []LogLine
+	LastUpdate  time.Time
+	NewTickData bool
 }
 
 // NewData - create new ACT session data
@@ -47,6 +48,7 @@ func NewData(session Session, user user.Data) (Data, error) {
 // UpdateEncounter - Add or update encounter data
 func (d *Data) UpdateEncounter(encounter Encounter) {
 	d.LastUpdate = time.Now()
+	d.NewTickData = true
 	// check if encounter update is for current counter
 	// update it if so
 	if encounter.ID == d.Encounter.ID {
@@ -73,6 +75,7 @@ func (d *Data) UpdateEncounter(encounter Encounter) {
 // UpdateCombatant - Add or update combatant data
 func (d *Data) UpdateCombatant(combatant Combatant) {
 	d.LastUpdate = time.Now()
+	d.NewTickData = true
 	// ensure there is a current encounter and that data is for it
 	if combatant.EncounterID == 0 || d.Encounter.ID == 0 || combatant.EncounterID != d.Encounter.ID {
 		return
