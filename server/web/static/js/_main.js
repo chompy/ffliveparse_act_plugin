@@ -11,7 +11,8 @@ window.addEventListener("load", function(e) {
         new WidgetEncounter().add();
         new WidgetParse().add();
         new WidgetTrigger().add();
-        new WidgetCactbotRaidboss().add();
+        //new WidgetCactbotRaidboss().add();
+        new WidgetCactbotTriggers().add();
     };
 
     socket.onmessage = function(event) {

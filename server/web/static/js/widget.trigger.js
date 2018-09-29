@@ -22,7 +22,7 @@ class WidgetTrigger extends WidgetBase
 
     getTitle()
     {
-        return "Triggers";
+        return "Custom Triggers";
     }
 
     getOptions()
@@ -65,8 +65,8 @@ class WidgetTrigger extends WidgetBase
     showOptionHelp()
     {
         var helpText ="";
-        helpText += "--- Trigger Widget ---\n";
-        helpText += "Sends notification when a trigger conditions are met.";
+        helpText += "--- Custom Triggers Widget ---\n";
+        helpText += "Supports ACT XML triggers with TTS.";
         alert(helpText);
     }
 

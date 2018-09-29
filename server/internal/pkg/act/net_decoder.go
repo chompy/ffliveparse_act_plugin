@@ -48,7 +48,7 @@ func DecodeSessionBytes(data []byte, addr *net.UDPAddr) (Session, error) {
 	pos := 1
 	// check version number
 	versionNumber := readInt32(data, &pos)
-	if versionNumber != app.VersionNumber {
+	if versionNumber != app.ActPluginVersionNumber {
 		return Session{}, errors.New("version number mismatch")
 	}
 	return Session{

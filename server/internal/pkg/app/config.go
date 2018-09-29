@@ -2,8 +2,11 @@ package app
 
 import "fmt"
 
-// VersionNumber - version number, must match number recieved from Act plugin to parse data
+// VersionNumber - version number
 const VersionNumber int32 = 1
+
+// ActPluginVersionNumber - act plugin version, must match number recieved from Act plugin to parse data
+const ActPluginVersionNumber int32 = 1
 
 // Name - app name
 const Name string = "FFLiveParse"

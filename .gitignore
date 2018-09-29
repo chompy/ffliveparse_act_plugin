@@ -3,3 +3,4 @@ act_plugin/obj
 *.code-workspace
 server/data/
 !server/data/.placeholder
+!server/web/util/build_cactbot_triggers/cactbot/*

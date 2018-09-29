@@ -1,3 +1,0 @@
-[submodule "server/web/static/lib/cactbot"]
-	path = server/web/static/lib/cactbot
-	url = https://github.com/quisquous/cactbot.git
