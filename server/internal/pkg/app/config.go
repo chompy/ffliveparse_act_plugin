@@ -3,7 +3,7 @@ package app
 import "fmt"
 
 // VersionNumber - version number
-const VersionNumber int32 = 2
+const VersionNumber int32 = 3
 
 // ActPluginVersionNumber - act plugin version, must match number recieved from Act plugin to parse data
 const ActPluginVersionNumber int32 = 1
