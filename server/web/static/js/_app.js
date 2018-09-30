@@ -30,7 +30,8 @@ class Application
             "encounter"         : new WidgetEncounter(),
             "parse"             : new WidgetParse(),
             "triggers"          : new WidgetTrigger(),
-            "cactbot-triggers"  : new WidgetCactbotTriggers()
+            "cactbot-triggers"  : new WidgetCactbotTriggers(),
+            "skilltimer"        : new WidgetSkilltimer()
         };
         // start installed widgets
         for (var i in this.userConfig["installedWidgets"]) {
