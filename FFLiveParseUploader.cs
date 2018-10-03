@@ -27,24 +27,20 @@ using Advanced_Combat_Tracker;
 [assembly: AssemblyTitle("FFLiveParse Uploader")]
 [assembly: AssemblyDescription("Provides real time parse upload that can be shared with other via the web.")]
 [assembly: AssemblyCompany("Nathan Ogden")]
-[assembly: AssemblyVersion("0.0.1")]
+[assembly: AssemblyVersion("0.0.2")]
 
 namespace ACT_Plugin
 {
     public class FFLiveParseUploader : UserControl, IActPluginV1
     {
 
-        const string DEFAULT_REMOTE_HOST = "ffxiv.chompy.me";   // Default remote host name to send data to
+        const string DEFAULT_REMOTE_HOST = "ffliveparse.com";   // Default remote host name to send data to
         const UInt16 DEFAULT_REMOTE_PORT = 31593;               // Default remote port
         
-        const string UID_CHAR_LIST = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        const int UID_SIZE = 5;
-
-        const Int32 VERSION_NUMBER = 1;                         // Version number, much match version number in parse server
+        const Int32 VERSION_NUMBER = 2;                         // Version number, much match version number in parse server
         const byte DATA_TYPE_SESSION = 1;                       // Data type, session data
         const byte DATA_TYPE_ENCOUNTER = 2;                     // Data type, encounter data
         const byte DATA_TYPE_COMBATANT = 3;                     // Data type, combatant data
-        const byte DATA_TYPE_COMBAT_ACTION = 4;                 // Data type, combat action
         const byte DATA_TYPE_LOG_LINE = 5;                      // Data type, log line
 
         private string settingFilePath = Path.Combine(
@@ -102,9 +98,9 @@ namespace ACT_Plugin
             // button save
             this.buttonSave.Location = new System.Drawing.Point(8, 95);
             this.buttonSave.Name = "buttonSave";
-            this.buttonSave.Size = new System.Drawing.Size(48, 24);
+            this.buttonSave.Size = new System.Drawing.Size(100, 24);
             this.buttonSave.TabIndex = 4;
-            this.buttonSave.Text = "Save";
+            this.buttonSave.Text = "Save / Connect";
 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;

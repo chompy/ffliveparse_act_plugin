@@ -1,10 +1,13 @@
-# Chompy FFXIV ACT Uploader Plugin
+# FFLiveParse - ACT Uploader Plugin
 
-This ACT plugin uploads your parses and log data to provided parse server.
+FFLiveParse is a tool for sharing your Final Fantasy XIV log and parse data from Advanced Combat Tracker (ACT) on the web in real time. 
+
+This ACT plugin uploads your parses and log data to the FFLiveParse server.
+
 
 ## Getting Started
 
-1. Visit ffxiv.chompy.me, click "Click here to generate your upload key."
+1. Visit ffliveparse.com, click "Click here to generate your upload key."
 2. You should now have an ACT upload key as well as a parse page that you can share with others.
 3. In ACT...goto the 'Plugins' tab. Under 'Plugin Listing', click 'Browse' and locate 'FFLiveParseUploader.cs'
 4. Click 'Add/Enable Plugin.'
