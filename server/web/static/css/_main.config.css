@@ -27,3 +27,12 @@
 #modalBody .widgetInstallOptions input {
     width: 50%;
 }
+
+#modalBody .configShareUrl {
+    margin: 10px 0 20px 0;
+    color: #000;
+    word-break: break-all;
+    display: block;
+    padding: 10px;
+    background: #b5b5b5;
+}

@@ -34,8 +34,8 @@ class Application
             "skilltimer"        : new WidgetSkilltimer()
         };
         // start installed widgets
-        for (var i in this.userConfig["installedWidgets"]) {
-            this.availableWidgets[this.userConfig["installedWidgets"][i]].add();
+        for (var i in this.userConfig["_app"]["installedWidgets"]) {
+            this.availableWidgets[this.userConfig["_app"]["installedWidgets"][i]].add();
         }
     }
 
@@ -46,9 +46,13 @@ class Application
     {
         // load widget config
         this._loadUserConfig();
-        // default installed widgets
-        if (!this.userConfig || !("installedWidgets" in this.userConfig)) {
-            this.userConfig["installedWidgets"] = ["encounter", "parse"];
+        // set default app settings
+        if (
+            !this.userConfig || !("_app" in this.userConfig) || !("installedWidgets" in this.userConfig["_app"])
+        ) {
+            this.userConfig["_app"] = {
+                "installedWidgets" : ["encounter", "parse"]
+            };
             this._saveUserConfig();
         }        
     }
@@ -90,6 +94,7 @@ class Application
             document.getElementById("loadingMessage").remove();
             console.log(">> Connected to server.");
             t.connected = true;
+            t.setConfigFromPresetUrl();
             t.initUserConfig();
             t.initWidgets();
             t.initConfigButton();
@@ -192,11 +197,11 @@ class Application
         // build list of installed and not installed widgets
         var installedWidgets = [];
         var notInstalledWidgets = [];
-        for (var i in this.userConfig["installedWidgets"]) {
-            installedWidgets.push(this.availableWidgets[this.userConfig["installedWidgets"][i]]);
+        for (var i in this.userConfig["_app"]["installedWidgets"]) {
+            installedWidgets.push(this.availableWidgets[this.userConfig["_app"]["installedWidgets"][i]]);
         }
         for (var key in this.availableWidgets) {
-            if (this.userConfig["installedWidgets"].indexOf(key) == -1) {
+            if (this.userConfig["_app"]["installedWidgets"].indexOf(key) == -1) {
                 notInstalledWidgets.push(this.availableWidgets[key]);
             }
         }
@@ -246,7 +251,7 @@ class Application
             var widgetName = notInstalledWidgetElement.getElementsByTagName("select")[0].childNodes[index].value;
             for (var key in t.availableWidgets) {
                 if (t.availableWidgets[key].getName() == widgetName) {
-                    t.userConfig["installedWidgets"].push(key);
+                    t.userConfig["_app"]["installedWidgets"].push(key);
                     t.availableWidgets[key].add();
                 }
             }
@@ -262,9 +267,9 @@ class Application
             var widgetName = installedWidgetElement.getElementsByTagName("select")[0].childNodes[index].value;
             for (var key in t.availableWidgets) {
                 if (t.availableWidgets[key].getName() == widgetName) {
-                    var index = t.userConfig["installedWidgets"].indexOf(key);
+                    var index = t.userConfig["_app"]["installedWidgets"].indexOf(key);
                     if (index >= 0) {
-                        t.userConfig["installedWidgets"].splice(index, 1);
+                        t.userConfig["_app"]["installedWidgets"].splice(index, 1);
                     }
                     t.availableWidgets[key].remove();
                 }
@@ -274,8 +279,87 @@ class Application
         });
 
         // debug status
-        Modal.addSection("Stats / Debug");
+        Modal.addSection("Stats / Debug");btoa
         Modal.addText("Data Recieved: " + (totalBytesRecieved / 1024).toFixed(4) + "KB.");
+
+    }
+
+    /**
+     * Parse URL query string
+     * @param string url 
+     * @return object
+     */
+    parseUrlQueryString(url)
+    {
+        var queryString = url.split("?");
+        if (queryString.length < 2) {
+            return {};
+        }
+        queryString = queryString[1].split("&");
+        var params = {};
+        for (var i in queryString) {
+            var queryParamParts = queryString[i].split("=");
+            if (queryParamParts.length < 2) {
+                continue;
+            }
+            params[queryParamParts[0]] = queryParamParts[1];
+        }
+        return params;
+    }
+
+    /**
+     * Set default configurations from preset key in url.
+     * @return object
+     */
+    setConfigFromPresetUrl()
+    {
+        if (typeof(window.location.href) == "undefined") {
+            return;
+        }
+        var queryParams = this.parseUrlQueryString(window.location.href);
+        if (!("p" in queryParams)) {
+            return;
+        }
+        
+        this._loadUserConfig();
+        if (!("_app" in this.userConfig)) {
+            this.userConfig["_app"] = {};
+        }
+
+        // hard code presets for now
+        switch(queryParams["p"])
+        {
+            case "stream":
+            case "stream_overylay":
+            case "obs":
+            {
+                this.userConfig["_app"]["installedWidgets"] = ["encounter", "parse"];
+                document.getElementById("header").style.display = "none";
+                document.getElementById("footer").style.display = "none";
+                document.getElementsByTagName("html")[0].style.backgroundColor = "transparent";
+                document.getElementsByTagName("body")[0].style.backgroundColor = "transparent";
+                break;
+           }
+
+           case "callouts":
+           case "triggers":
+           case "cactbot":
+           {
+                this.userConfig["_app"]["installedWidgets"] = ["encounter", "parse", "cactbot-triggers", "triggers"];
+                if (!("cactbot-triggers" in this.userConfig)) {
+                    this.userConfig["cactbot-triggers"] = {};
+                }
+                this.userConfig["cactbot-triggers"]["tts"] = true;
+                this.userConfig["cactbot-triggers"]["beep"] = true;
+                if (!("characterName" in this.userConfig["cactbot-triggers"])) {
+                    this.userConfig["cactbot-triggers"]["characterName"] = prompt("Enter your character name for callouts.");
+                }
+                break;
+           }
+
+        }
+        
+        this._saveUserConfig();
 
     }
 
@@ -285,13 +369,9 @@ class Application
      */
     _loadUserConfig()
     {
-        this.userConfig = {};
-        var userConfig = JSON.parse(window.localStorage.getItem(USER_CONFIG_LOCAL_STORAGE_KEY));
-        if (!userConfig) {
-            return;
-        }
-        if ("_app" in userConfig) {
-            this.userConfig = userConfig["_app"];
+        this.userConfig = JSON.parse(window.localStorage.getItem(USER_CONFIG_LOCAL_STORAGE_KEY));
+        if (!this.userConfig) {
+            this.userConfig = {};
         }
     }
 
@@ -300,14 +380,9 @@ class Application
      */
     _saveUserConfig()
     {
-        var userConfig = JSON.parse(window.localStorage.getItem(USER_CONFIG_LOCAL_STORAGE_KEY));
-        if (!userConfig) {
-            userConfig = {};
-        }
-        userConfig["_app"] = this.userConfig;
         window.localStorage.setItem(
             USER_CONFIG_LOCAL_STORAGE_KEY,
-            JSON.stringify(userConfig)
+            JSON.stringify(this.userConfig)
         );
     }
 

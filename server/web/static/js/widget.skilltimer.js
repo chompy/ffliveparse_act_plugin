@@ -183,6 +183,9 @@ class WidgetSkilltimer extends WidgetBase
         for (var i in this.data) {
             var skillData = this.data[i];
             var skillElement = skillContainerElement.getElementsByClassName("skillTimerSkill-" + skillData.id)[0];
+            if (!skillElement) {
+                continue;
+            }
             // not enabled or not active
             if (
                 this.userConfig["skills"].indexOf(skillData.id) == -1 ||
