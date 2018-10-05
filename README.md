@@ -9,7 +9,17 @@ This ACT plugin uploads your parses and log data to the FFLiveParse server.
 
 1. Visit ffliveparse.com, click "Click here to generate your upload key."
 2. You should now have an ACT upload key as well as a parse page that you can share with others.
-3. In ACT...goto the 'Plugins' tab. Under 'Plugin Listing', click 'Browse' and locate 'FFLiveParseUploader.cs'
-4. Click 'Add/Enable Plugin.'
-5. There should be a new tab called "FFLiveParseUploader.cs," click on it.
+
+1. Download the ACT plugin if you have already. Extract this ZIP. Open ACT and navigate to the plugins tab.
+2. Click Browse and locate the 'FFLiveParseUploader.cs' file.
+3. Click 'Add/Enable Plugin.'
+
+![ACT install plugin](FFLiveParseSetup1.png "ACT install plugin")
+
+4. There should be a new tab called "FFLiveParseUploader.cs," click on it.
+5. Visit ffliveparse.com, click "Click here to generate your upload key."
 6. Paste in the upload key from the web site. Click save. If everything is working the word "Online" should appear in the top left corner of your parse page.
+
+![Generate upload key](FFLiveParseSetup2.png "Generate upload key")
+
+
