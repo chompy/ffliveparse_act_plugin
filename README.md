@@ -21,5 +21,3 @@ This ACT plugin uploads your parses and log data to the FFLiveParse server.
 6. Paste in the upload key from the web site. Click save. If everything is working the word "Online" should appear in the top left corner of your parse page.
 
 ![Generate upload key](FFLiveParseSetup2.png "Generate upload key")
-
-7. Enter the names of all your characters in the 'Character Names' field, seperate each character name with a comma (,). This will ensure all timeline actions can be linked to your parse data. Example... "Character One, Character Two, Character Three." If you skip this step then your actions might appear under "Non-Player Combatant(s)."

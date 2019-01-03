@@ -27,7 +27,7 @@ using Advanced_Combat_Tracker;
 [assembly: AssemblyTitle("FFLiveParse Uploader")]
 [assembly: AssemblyDescription("Provides real time parse upload that can be shared with other via the web.")]
 [assembly: AssemblyCompany("Nathan Ogden")]
-[assembly: AssemblyVersion("0.0.3")]
+[assembly: AssemblyVersion("0.05")]
 
 namespace ACT_Plugin
 {
@@ -37,7 +37,7 @@ namespace ACT_Plugin
         const string DEFAULT_REMOTE_HOST = "ffliveparse.com";   // Default remote host name to send data to
         const UInt16 DEFAULT_REMOTE_PORT = 31593;               // Default remote port
         
-        const Int32 VERSION_NUMBER = 2;                         // Version number, much match version number in parse server
+        const Int32 VERSION_NUMBER = 5;                         // Version number, much match version number in parse server
         const byte DATA_TYPE_SESSION = 1;                       // Data type, session data
         const byte DATA_TYPE_ENCOUNTER = 2;                     // Data type, encounter data
         const byte DATA_TYPE_COMBATANT = 3;                     // Data type, combatant data
@@ -57,8 +57,6 @@ namespace ACT_Plugin
 
 		private TextBox textboxPrivateKey;                      // form text box for private key
 		private System.Windows.Forms.Label labelPrivateKey;     // form label for private key
-		private TextBox textboxCharNames;                       // form text box for character names
-		private System.Windows.Forms.Label labelCharNames;      // form label for character names
 		private TextBox textboxHost;                            // form text box for host
 		private System.Windows.Forms.Label labelHost;           // form label for host
         private Button buttonSave;                              // form button to save settings
@@ -68,8 +66,6 @@ namespace ACT_Plugin
         {
 			this.labelPrivateKey = new System.Windows.Forms.Label();
 			this.textboxPrivateKey = new System.Windows.Forms.TextBox();
-            this.labelCharNames = new System.Windows.Forms.Label();
-            this.textboxCharNames = new System.Windows.Forms.TextBox();
 			this.labelHost = new System.Windows.Forms.Label();
 			this.textboxHost = new System.Windows.Forms.TextBox();
             this.buttonSave = new System.Windows.Forms.Button();
@@ -87,46 +83,30 @@ namespace ACT_Plugin
 			this.textboxPrivateKey.Size = new System.Drawing.Size(431, 20);
 			this.textboxPrivateKey.TabIndex = 1;
 			this.textboxPrivateKey.Text = "";
-            // label - character names
-			this.labelCharNames.AutoSize = true;
-			this.labelCharNames.Location = new System.Drawing.Point(8, 50);
-			this.labelCharNames.Name = "labelCharNames";
-			this.labelCharNames.Size = new System.Drawing.Size(434, 13);
-			this.labelCharNames.TabIndex = 2;
-			this.labelCharNames.Text = "Character Name(s) (Comma delimited list of character names, used to pair log data in timeline)";
-			// textbox - character names
-			this.textboxCharNames.Location = new System.Drawing.Point(8, 67);
-			this.textboxCharNames.Name = "textboxCharNames";
-			this.textboxCharNames.Size = new System.Drawing.Size(431, 20);
-			this.textboxCharNames.TabIndex = 3;
-			this.textboxCharNames.Text = "";
             // label - host
 			this.labelHost.AutoSize = true;
-			this.labelHost.Location = new System.Drawing.Point(8, 92);
+			this.labelHost.Location = new System.Drawing.Point(8, 50);
 			this.labelHost.Name = "labelHost";
 			this.labelHost.Size = new System.Drawing.Size(434, 13);
-			this.labelHost.TabIndex = 4;
+			this.labelHost.TabIndex = 2;
 			this.labelHost.Text = "Upload Server Address (You probably don't need to change this.)";
 			// textbox - host
-			this.textboxHost.Location = new System.Drawing.Point(8, 108);
+			this.textboxHost.Location = new System.Drawing.Point(8, 66);
 			this.textboxHost.Name = "textboxHost";
 			this.textboxHost.Size = new System.Drawing.Size(431, 20);
-			this.textboxHost.TabIndex = 5;
-			this.textboxHost.Text = DEFAULT_REMOTE_HOST + ":" + DEFAULT_REMOTE_PORT;
-
+			this.textboxHost.TabIndex = 3;
+            this.textboxHost.Text = DEFAULT_REMOTE_HOST + ":" + DEFAULT_REMOTE_PORT;
             // button save
-            this.buttonSave.Location = new System.Drawing.Point(8, 134);
+            this.buttonSave.Location = new System.Drawing.Point(8, 95);
             this.buttonSave.Name = "buttonSave";
             this.buttonSave.Size = new System.Drawing.Size(100, 24);
-            this.buttonSave.TabIndex = 6;
+            this.buttonSave.TabIndex = 4;
             this.buttonSave.Text = "Save / Connect";
 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.Controls.Add(this.textboxPrivateKey);
 			this.Controls.Add(this.labelPrivateKey);
-            this.Controls.Add(this.labelCharNames);
-            this.Controls.Add(this.textboxCharNames);
             this.Controls.Add(this.textboxHost);
             this.Controls.Add(this.labelHost);
             this.Controls.Add(this.buttonSave);
@@ -291,7 +271,14 @@ namespace ACT_Plugin
             // send combatant data
             foreach (CombatantData cd in encounter.GetAllies()) {
                 if (cd.Name == actionInfo.attacker) {
-                    sendEncounterCombatantData(cd);
+                    // get actor id (stored as tag in actionInfo)
+                    Int32 actorId = int.Parse(
+                        (string) actionInfo.tags["ActorID"],
+                        System.Globalization.NumberStyles.HexNumber
+                    );
+                    // send combatant data with actor id
+                    sendEncounterCombatantData(cd, actorId);
+                    break;
                 }
             }
         }
@@ -312,12 +299,13 @@ namespace ACT_Plugin
             sendUdp(ref sendData);
         }
 
-        void sendEncounterCombatantData(CombatantData cd)
-        {
+        void sendEncounterCombatantData(CombatantData cd, Int32 actorId)
+        {           
             // build send data
             List<Byte> sendData = new List<Byte>();
             sendData.Add(DATA_TYPE_COMBATANT);                             // declare data type
             prepareInt32(ref sendData, cd.EncStartTime.GetHashCode());     // encounter id
+            prepareInt32(ref sendData, actorId);                           // actor id (ffxiv)
             prepareString(ref sendData, cd.Name);                          // combatant name
             prepareString(ref sendData, cd.GetColumnByName("Job"));        // combatant job (ffxiv)
             prepareInt32(ref sendData, (Int32) cd.Damage);                 // damage done
@@ -335,22 +323,6 @@ namespace ACT_Plugin
         {
             List<Byte> sendData = new List<Byte>();
             sendData.Add(DATA_TYPE_LOG_LINE);
-            // find/replace character names in log line
-            string logLine = logInfo.logLine;
-            if (logInfo.inCombat) {
-                foreach (string charName in this.characterNames) {
-                    if (String.IsNullOrEmpty(charName)) {
-                        continue;
-                    }
-                    logLine = logLine.Replace(
-                        charName,
-                        ActGlobals.oFormActMain.ActiveZone.ActiveEncounter.CharName
-                    );
-                    if (logLine != logInfo.logLine) {
-                        break;
-                    }
-                }
-            }
             // encounter id, if active
             Int32 encounterId = 0;
             if (logInfo.inCombat) {
@@ -360,7 +332,7 @@ namespace ACT_Plugin
             // time
             prepareDateTime(ref sendData, logInfo.detectedTime);
             // line
-            prepareString(ref sendData, logLine);
+            prepareString(ref sendData, logInfo.logLine);
             // send
             sendUdp(ref sendData);
         }
@@ -384,7 +356,7 @@ namespace ACT_Plugin
             }
             int pos = 0;
             List<string> settingStrings = new List<string>();
-            for (var i = 0; i < 3; i++) {
+            for (var i = 0; i < 2; i++) {
                 if (pos >= data.Count) {
                     settingStrings.Add("");
                     continue;
@@ -409,15 +381,9 @@ namespace ACT_Plugin
             if (hostData.Length > 1) {
                 UInt16.TryParse(hostData[1], out this.remotePort);
             }
-            // read character names
-            var charNamesListElement = settingStrings[2].Split(',');
-            for (var i = 0; i < charNamesListElement.Length; i++) {
-                this.characterNames.Add(charNamesListElement[i].Trim());
-            }
             // update textboxes
             textboxPrivateKey.Text = settingStrings[0];
             textboxHost.Text = settingStrings[1];
-            textboxCharNames.Text = settingStrings[2];
         }
 
         void saveSettings()
@@ -425,7 +391,6 @@ namespace ACT_Plugin
             List<Byte> saveData = new List<Byte>();
             prepareString(ref saveData, this.textboxPrivateKey.Text);
             prepareString(ref saveData, this.textboxHost.Text);
-            prepareString(ref saveData, this.textboxCharNames.Text);
             Byte[] saveBytes = saveData.ToArray();
             using (FileStream fs = new FileStream(settingFilePath, FileMode.Create, FileAccess.Write, FileShare.Write))
             {
