@@ -7,10 +7,10 @@ This ACT plugin uploads your parses and log data to the FFLiveParse server.
 
 ## Getting Started
 
-1. Visit ffliveparse.com, click "Click here to generate your upload key."
+1. Visit [ffliveparse.com](ffliveparse.com), click "Click here to generate your upload key."
 2. You should now have an ACT upload key as well as a parse page that you can share with others.
 
-1. Download the ACT plugin if you have already. Extract this ZIP. Open ACT and navigate to the plugins tab.
+1. Download the [ACT plugin](https://github.com/chompy/ffliveparse_act_plugin/releases) if you haven't already. Extract this ZIP. Open ACT and navigate to the plugins tab.
 2. Click Browse and locate the 'FFLiveParseUploader.cs' file.
 3. Click 'Add/Enable Plugin.'
 
@@ -22,4 +22,4 @@ This ACT plugin uploads your parses and log data to the FFLiveParse server.
 
 ![Generate upload key](FFLiveParseSetup2.png "Generate upload key")
 
-
+7. Enter the names of all your characters in the 'Character Names' field, seperate each character name with a comma (,). This will ensure all timeline actions can be linked to your parse data. Example... "Character One, Character Two, Character Three." If you skip this step then your actions might appear under "Non-Player Combatant(s)."

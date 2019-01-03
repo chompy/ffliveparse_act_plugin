@@ -27,7 +27,7 @@ using Advanced_Combat_Tracker;
 [assembly: AssemblyTitle("FFLiveParse Uploader")]
 [assembly: AssemblyDescription("Provides real time parse upload that can be shared with other via the web.")]
 [assembly: AssemblyCompany("Nathan Ogden")]
-[assembly: AssemblyVersion("0.0.2")]
+[assembly: AssemblyVersion("0.0.3")]
 
 namespace ACT_Plugin
 {
@@ -53,9 +53,12 @@ namespace ACT_Plugin
         private string remoteHost;                              // Remote host name to send data to
         private UInt16 remotePort;                              // Remote port
         private string privateKey;                              // Private key
+        private List<string> characterNames;                    // List of character names
 
 		private TextBox textboxPrivateKey;                      // form text box for private key
 		private System.Windows.Forms.Label labelPrivateKey;     // form label for private key
+		private TextBox textboxCharNames;                       // form text box for character names
+		private System.Windows.Forms.Label labelCharNames;      // form label for character names
 		private TextBox textboxHost;                            // form text box for host
 		private System.Windows.Forms.Label labelHost;           // form label for host
         private Button buttonSave;                              // form button to save settings
@@ -65,6 +68,8 @@ namespace ACT_Plugin
         {
 			this.labelPrivateKey = new System.Windows.Forms.Label();
 			this.textboxPrivateKey = new System.Windows.Forms.TextBox();
+            this.labelCharNames = new System.Windows.Forms.Label();
+            this.textboxCharNames = new System.Windows.Forms.TextBox();
 			this.labelHost = new System.Windows.Forms.Label();
 			this.textboxHost = new System.Windows.Forms.TextBox();
             this.buttonSave = new System.Windows.Forms.Button();
@@ -82,30 +87,46 @@ namespace ACT_Plugin
 			this.textboxPrivateKey.Size = new System.Drawing.Size(431, 20);
 			this.textboxPrivateKey.TabIndex = 1;
 			this.textboxPrivateKey.Text = "";
+            // label - character names
+			this.labelCharNames.AutoSize = true;
+			this.labelCharNames.Location = new System.Drawing.Point(8, 50);
+			this.labelCharNames.Name = "labelCharNames";
+			this.labelCharNames.Size = new System.Drawing.Size(434, 13);
+			this.labelCharNames.TabIndex = 2;
+			this.labelCharNames.Text = "Character Name(s) (Comma delimited list of character names, used to pair log data in timeline)";
+			// textbox - character names
+			this.textboxCharNames.Location = new System.Drawing.Point(8, 67);
+			this.textboxCharNames.Name = "textboxCharNames";
+			this.textboxCharNames.Size = new System.Drawing.Size(431, 20);
+			this.textboxCharNames.TabIndex = 3;
+			this.textboxCharNames.Text = "";
             // label - host
 			this.labelHost.AutoSize = true;
-			this.labelHost.Location = new System.Drawing.Point(8, 50);
+			this.labelHost.Location = new System.Drawing.Point(8, 92);
 			this.labelHost.Name = "labelHost";
 			this.labelHost.Size = new System.Drawing.Size(434, 13);
-			this.labelHost.TabIndex = 2;
+			this.labelHost.TabIndex = 4;
 			this.labelHost.Text = "Upload Server Address (You probably don't need to change this.)";
 			// textbox - host
-			this.textboxHost.Location = new System.Drawing.Point(8, 66);
+			this.textboxHost.Location = new System.Drawing.Point(8, 108);
 			this.textboxHost.Name = "textboxHost";
 			this.textboxHost.Size = new System.Drawing.Size(431, 20);
-			this.textboxHost.TabIndex = 3;
+			this.textboxHost.TabIndex = 5;
 			this.textboxHost.Text = DEFAULT_REMOTE_HOST + ":" + DEFAULT_REMOTE_PORT;
+
             // button save
-            this.buttonSave.Location = new System.Drawing.Point(8, 95);
+            this.buttonSave.Location = new System.Drawing.Point(8, 134);
             this.buttonSave.Name = "buttonSave";
             this.buttonSave.Size = new System.Drawing.Size(100, 24);
-            this.buttonSave.TabIndex = 4;
+            this.buttonSave.TabIndex = 6;
             this.buttonSave.Text = "Save / Connect";
 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.Controls.Add(this.textboxPrivateKey);
 			this.Controls.Add(this.labelPrivateKey);
+            this.Controls.Add(this.labelCharNames);
+            this.Controls.Add(this.textboxCharNames);
             this.Controls.Add(this.textboxHost);
             this.Controls.Add(this.labelHost);
             this.Controls.Add(this.buttonSave);
@@ -314,16 +335,36 @@ namespace ACT_Plugin
         {
             List<Byte> sendData = new List<Byte>();
             sendData.Add(DATA_TYPE_LOG_LINE);
+            // find/replace character names in log line
+            string logLine = logInfo.logLine;
+            if (logInfo.inCombat) {
+                foreach (string charName in this.characterNames) {
+                    logLine = logLine.Replace(
+                        charName,
+                        ActGlobals.oFormActMain.ActiveZone.ActiveEncounter.CharName
+                    );
+                    if (logLine != logInfo.logLine) {
+                        break;
+                    }
+                }
+            }
             // encounter id, if active
             Int32 encounterId = 0;
             if (logInfo.inCombat) {
                 encounterId = ActGlobals.oFormActMain.ActiveZone.ActiveEncounter.StartTime.GetHashCode();
+                // string replace character names in log line
+                foreach (string charName in this.characterNames) {
+                    logLine.Replace(
+                        charName,
+                        ActGlobals.oFormActMain.ActiveZone.ActiveEncounter.CharName
+                    );
+                }
             }
             prepareInt32(ref sendData, encounterId);
             // time
             prepareDateTime(ref sendData, logInfo.detectedTime);
             // line
-            prepareString(ref sendData, logInfo.logLine);
+            prepareString(ref sendData, logLine);
             // send
             sendUdp(ref sendData);
         }
@@ -332,6 +373,7 @@ namespace ACT_Plugin
         {
             this.remoteHost = DEFAULT_REMOTE_HOST;
             this.remotePort = DEFAULT_REMOTE_PORT;
+            this.characterNames = new List<string>();
             if (!File.Exists(settingFilePath)) {
                 return;
             }
@@ -346,7 +388,11 @@ namespace ACT_Plugin
             }
             int pos = 0;
             List<string> settingStrings = new List<string>();
-            for (var i = 0; i < 2; i++) {
+            for (var i = 0; i < 3; i++) {
+                if (pos >= data.Count) {
+                    settingStrings.Add("");
+                    continue;
+                }
                 byte[] stringLenArr = data.GetRange(pos, 2).ToArray();
                 if (BitConverter.IsLittleEndian) {
                     Array.Reverse(stringLenArr);
@@ -361,14 +407,21 @@ namespace ACT_Plugin
                 settingStrings.Add("");
             }
             this.privateKey = settingStrings[0];
+            // parse host+port
             string[] hostData = settingStrings[1].Split(':');
             this.remoteHost = hostData[0];
             if (hostData.Length > 1) {
                 UInt16.TryParse(hostData[1], out this.remotePort);
             }
+            // read character names
+            var charNamesListElement = settingStrings[2].Split(',');
+            for (var i = 0; i < charNamesListElement.Length; i++) {
+                this.characterNames.Add(charNamesListElement[i].Trim());
+            }
             // update textboxes
             textboxPrivateKey.Text = settingStrings[0];
             textboxHost.Text = settingStrings[1];
+            textboxCharNames.Text = settingStrings[2];
         }
 
         void saveSettings()
@@ -376,12 +429,13 @@ namespace ACT_Plugin
             List<Byte> saveData = new List<Byte>();
             prepareString(ref saveData, this.textboxPrivateKey.Text);
             prepareString(ref saveData, this.textboxHost.Text);
+            prepareString(ref saveData, this.textboxCharNames.Text);
             Byte[] saveBytes = saveData.ToArray();
             using (FileStream fs = new FileStream(settingFilePath, FileMode.Create, FileAccess.Write, FileShare.Write))
             {
                 fs.Write(saveBytes, 0, saveBytes.Length);
             }
-            lblStatus.Text = " Settings saved.";
+            lblStatus.Text = "Settings saved.";
         }
 
     }
