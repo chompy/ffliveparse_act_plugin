@@ -339,6 +339,9 @@ namespace ACT_Plugin
             string logLine = logInfo.logLine;
             if (logInfo.inCombat) {
                 foreach (string charName in this.characterNames) {
+                    if (String.IsNullOrEmpty(charName)) {
+                        continue;
+                    }
                     logLine = logLine.Replace(
                         charName,
                         ActGlobals.oFormActMain.ActiveZone.ActiveEncounter.CharName
@@ -352,13 +355,6 @@ namespace ACT_Plugin
             Int32 encounterId = 0;
             if (logInfo.inCombat) {
                 encounterId = ActGlobals.oFormActMain.ActiveZone.ActiveEncounter.StartTime.GetHashCode();
-                // string replace character names in log line
-                foreach (string charName in this.characterNames) {
-                    logLine.Replace(
-                        charName,
-                        ActGlobals.oFormActMain.ActiveZone.ActiveEncounter.CharName
-                    );
-                }
             }
             prepareInt32(ref sendData, encounterId);
             // time
