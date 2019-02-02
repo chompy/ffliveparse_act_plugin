@@ -154,6 +154,7 @@ namespace ACT_Plugin
 
         void oFormActMain_OnCombatStart(bool isImport, CombatToggleEventArgs actionInfo)
         {
+            sendSessionData();
         }
 
         void oFormActMain_OnCombatEnd(bool isImport, CombatToggleEventArgs actionInfo)
