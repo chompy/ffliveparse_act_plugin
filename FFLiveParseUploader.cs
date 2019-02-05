@@ -27,7 +27,7 @@ using Advanced_Combat_Tracker;
 [assembly: AssemblyTitle("FFLiveParse Uploader")]
 [assembly: AssemblyDescription("Provides real time parse upload that can be shared with other via the web.")]
 [assembly: AssemblyCompany("Nathan Ogden")]
-[assembly: AssemblyVersion("0.05")]
+[assembly: AssemblyVersion("0.06")]
 
 namespace ACT_Plugin
 {
@@ -37,7 +37,7 @@ namespace ACT_Plugin
         const string DEFAULT_REMOTE_HOST = "ffliveparse.com";   // Default remote host name to send data to
         const UInt16 DEFAULT_REMOTE_PORT = 31593;               // Default remote port
         
-        const Int32 VERSION_NUMBER = 5;                         // Version number, much match version number in parse server
+        const Int32 VERSION_NUMBER = 6;                         // Version number, much match version number in parse server
         const byte DATA_TYPE_SESSION = 1;                       // Data type, session data
         const byte DATA_TYPE_ENCOUNTER = 2;                     // Data type, encounter data
         const byte DATA_TYPE_COMBATANT = 3;                     // Data type, combatant data
