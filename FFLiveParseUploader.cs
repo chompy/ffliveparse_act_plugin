@@ -27,7 +27,7 @@ using Advanced_Combat_Tracker;
 [assembly: AssemblyTitle("FFLiveParse Uploader")]
 [assembly: AssemblyDescription("Provides real time parse upload that can be shared with other via the web.")]
 [assembly: AssemblyCompany("Nathan Ogden")]
-[assembly: AssemblyVersion("0.06")]
+[assembly: AssemblyVersion("0.07")]
 
 namespace ACT_Plugin
 {
@@ -37,11 +37,12 @@ namespace ACT_Plugin
         const string DEFAULT_REMOTE_HOST = "ffliveparse.com";   // Default remote host name to send data to
         const UInt16 DEFAULT_REMOTE_PORT = 31593;               // Default remote port
         
-        const Int32 VERSION_NUMBER = 6;                         // Version number, much match version number in parse server
+        const Int32 VERSION_NUMBER = 7;                         // Version number, much match version number in parse server
         const byte DATA_TYPE_SESSION = 1;                       // Data type, session data
         const byte DATA_TYPE_ENCOUNTER = 2;                     // Data type, encounter data
         const byte DATA_TYPE_COMBATANT = 3;                     // Data type, combatant data
         const byte DATA_TYPE_LOG_LINE = 5;                      // Data type, log line
+        const byte DATA_TYPE_FLAG = 99;                         // Data type, flag
 
         private string settingFilePath = Path.Combine(
             ActGlobals.oFormActMain.AppDataFolder.FullName,
@@ -54,11 +55,15 @@ namespace ACT_Plugin
         private UInt16 remotePort;                              // Remote port
         private string privateKey;                              // Private key
         private List<string> characterNames;                    // List of character names
+        private bool noSaveHistory;                             // Whether or not to save encounter history
 
 		private TextBox textboxPrivateKey;                      // form text box for private key
 		private System.Windows.Forms.Label labelPrivateKey;     // form label for private key
 		private TextBox textboxHost;                            // form text box for host
 		private System.Windows.Forms.Label labelHost;           // form label for host
+        private CheckBox checkboxNoSave;                        // form checkbox for no save logs option
+        private System.Windows.Forms.Label labelNoSave;          // form label for no save logs option
+
         private Button buttonSave;                              // form button to save settings
 
 
@@ -68,6 +73,8 @@ namespace ACT_Plugin
 			this.textboxPrivateKey = new System.Windows.Forms.TextBox();
 			this.labelHost = new System.Windows.Forms.Label();
 			this.textboxHost = new System.Windows.Forms.TextBox();
+            this.labelNoSave = new System.Windows.Forms.Label();
+            this.checkboxNoSave = new System.Windows.Forms.CheckBox();
             this.buttonSave = new System.Windows.Forms.Button();
 			this.SuspendLayout();
             // label - private key
@@ -96,11 +103,23 @@ namespace ACT_Plugin
 			this.textboxHost.Size = new System.Drawing.Size(431, 20);
 			this.textboxHost.TabIndex = 3;
             this.textboxHost.Text = DEFAULT_REMOTE_HOST + ":" + DEFAULT_REMOTE_PORT;
+            // label - no save
+			this.labelNoSave.AutoSize = true;
+			this.labelNoSave.Location = new System.Drawing.Point(25, 96);
+			this.labelNoSave.Name = "labelNoSave";
+			this.labelNoSave.Size = new System.Drawing.Size(434, 20);
+			this.labelNoSave.TabIndex = 4;
+			this.labelNoSave.Text = "Don't Save Encounter History";
+			// checkbox - no save
+			this.checkboxNoSave.Location = new System.Drawing.Point(8, 93);
+			this.checkboxNoSave.Name = "checkboxNoSave";
+			this.checkboxNoSave.Size = new System.Drawing.Size(15, 20);
+			this.checkboxNoSave.TabIndex = 5;      
             // button save
-            this.buttonSave.Location = new System.Drawing.Point(8, 95);
+            this.buttonSave.Location = new System.Drawing.Point(8, 130);
             this.buttonSave.Name = "buttonSave";
             this.buttonSave.Size = new System.Drawing.Size(100, 24);
-            this.buttonSave.TabIndex = 4;
+            this.buttonSave.TabIndex = 6;
             this.buttonSave.Text = "Save / Connect";
 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -109,6 +128,8 @@ namespace ACT_Plugin
 			this.Controls.Add(this.labelPrivateKey);
             this.Controls.Add(this.textboxHost);
             this.Controls.Add(this.labelHost);
+            this.Controls.Add(this.checkboxNoSave);
+            this.Controls.Add(this.labelNoSave);
             this.Controls.Add(this.buttonSave);
 			this.Name = "FFLiveParse Uploader";
 			this.Size = new System.Drawing.Size(686, 384);
@@ -202,6 +223,9 @@ namespace ACT_Plugin
                 for (var i = 0; i < 3; i++) {
                     sendSessionData();
                 }
+                for (var i = 0; i < 3; i++) {
+                    sendFlag("NoSave", this.noSaveHistory);
+                }               
             } catch (System.Net.Sockets.SocketException e) {
                 lblStatus.Text = "ERROR: " + e.Message;
             }
@@ -320,6 +344,17 @@ namespace ACT_Plugin
             sendUdp(ref sendData);
         }
 
+        void sendFlag(string name, bool value)
+        {
+            // build send data
+            List<Byte> sendData = new List<Byte>();
+            sendData.Add(DATA_TYPE_FLAG);
+            prepareString(ref sendData, name);
+            sendData.Add(value ? (Byte) 1 : (Byte) 0);
+            // send
+            sendUdp(ref sendData);
+        }
+
         void sendLogLine(LogLineEventArgs logInfo)
         {
             List<Byte> sendData = new List<Byte>();
@@ -343,6 +378,7 @@ namespace ACT_Plugin
             this.remoteHost = DEFAULT_REMOTE_HOST;
             this.remotePort = DEFAULT_REMOTE_PORT;
             this.characterNames = new List<string>();
+            this.noSaveHistory = false;
             if (!File.Exists(settingFilePath)) {
                 return;
             }
@@ -385,6 +421,11 @@ namespace ACT_Plugin
             // update textboxes
             textboxPrivateKey.Text = settingStrings[0];
             textboxHost.Text = settingStrings[1];
+            // parse no save
+            if (pos < data.Count) {
+                this.noSaveHistory = data[pos] == 1;
+                this.checkboxNoSave.Checked = this.noSaveHistory;
+            }
         }
 
         void saveSettings()
@@ -392,6 +433,7 @@ namespace ACT_Plugin
             List<Byte> saveData = new List<Byte>();
             prepareString(ref saveData, this.textboxPrivateKey.Text);
             prepareString(ref saveData, this.textboxHost.Text);
+            saveData.Add(this.checkboxNoSave.Checked ? (byte) 1 : (byte) 0);
             Byte[] saveBytes = saveData.ToArray();
             using (FileStream fs = new FileStream(settingFilePath, FileMode.Create, FileAccess.Write, FileShare.Write))
             {
